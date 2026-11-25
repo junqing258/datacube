@@ -9,11 +9,439 @@ datasource db {
 
 // 平台用户：业务人员 / 开发者 / 管理员
 model User {
+  id          String        @id @default(cuid())
+  email       String        @unique
+  name        String
+  password    String
+  role        String        @default("member") // member | developer | admin
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  memberships SpaceMember[]
+}
+
+model Space {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members     SpaceMember[]
+  connections DataConnection[]
+  dashboards  Dashboard[]
+}
+
+model SpaceMember {
+  spaceId    String
+  userId     String
+  role       String    @default("member") // member | developer | admin
+  disabledAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  datasetGrants   DatasetGrant[]
+  fieldGrants     FieldGrant[]
+  knowledgeGrants KnowledgeGrant[]
+  apiKeys         ApiKey[]
+  charts          Chart[]
+  dashboards      Dashboard[]
+  favorites       DashboardFavorite[]
+  dashboardGrants DashboardGrant[]
+  executions      QueryExecution[]
+  auditEvents     AuditEvent[]
+  mutations       IdempotentMutation[]
+
+  @@id([spaceId, userId])
+  @@index([userId])
+}
+
+model DataConnection {
+  id          String    @id @default(cuid())
+  spaceId     String
+  name        String
+  kind        String // mysql | postgresql | api | transform_api
+  settings    String // JSON, non-secret connector configuration
+  secretRef   String? // Reference to backend-managed credentials
+  disabledAt  DateTime?
+  checkedAt   DateTime?
+  checkStatus String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  space    Space     @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  datasets Dataset[]
+
+  @@unique([spaceId, id])
+  @@unique([spaceId, name])
+}
+
+model Dataset {
+  id           String    @id @default(cuid())
+  spaceId      String
+  connectionId String
+  key          String
+  name         String
+  description  String?
+  grain        String
+  owner        String?
+  kind         String // table | api_snapshot | api_query
+  contract     String // JSON, physical mapping or API contract
+  timeFieldKey String? // Validated against this dataset's field catalog
+  disabledAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  connection     DataConnection         @relation(fields: [spaceId, connectionId], references: [spaceId, id], onDelete: Restrict)
+  fields         DatasetField[]
+  grants         DatasetGrant[]
+  metrics        Metric[]
+  queries        QueryDefinition[]
+  joinsFrom      DatasetJoin[]          @relation("JoinFrom")
+  joinsTo        DatasetJoin[]          @relation("JoinTo")
+  snapshots      DatasetSnapshot[]
+  activeSnapshot ActiveDatasetSnapshot?
+
+  @@unique([spaceId, id])
+  @@unique([spaceId, connectionId, id])
+  @@unique([spaceId, connectionId, key])
+}
+
+model DatasetField {
+  id          String  @id @default(cuid())
+  spaceId     String
+  datasetId   String
+  key         String
+  name        String
+  dataType    String
+  description String?
+  unit        String?
+  semantics   String? // JSON, aliases and allowed values
+  sensitive   Boolean @default(false)
+
+  dataset Dataset      @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+  grants  FieldGrant[]
+
+  @@unique([spaceId, datasetId, id])
+  @@unique([spaceId, datasetId, key])
+}
+
+model DatasetGrant {
+  spaceId   String
+  datasetId String
+  userId    String
+
+  dataset Dataset      @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Cascade)
+  member  SpaceMember  @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+  fields  FieldGrant[]
+
+  @@id([spaceId, datasetId, userId])
+  @@index([spaceId, userId])
+}
+
+// Field visibility is an allowlist within a dataset grant.
+model FieldGrant {
+  spaceId   String
+  datasetId String
+  userId    String
+  fieldId   String
+
+  datasetGrant       DatasetGrant @relation(fields: [spaceId, datasetId, userId], references: [spaceId, datasetId, userId], onDelete: Cascade)
+  field              DatasetField @relation(fields: [spaceId, datasetId, fieldId], references: [spaceId, datasetId, id], onDelete: Cascade)
+  SpaceMember        SpaceMember? @relation(fields: [spaceMemberSpaceId, spaceMemberUserId], references: [spaceId, userId])
+  spaceMemberSpaceId String?
+  spaceMemberUserId  String?
+
+  @@id([spaceId, datasetId, userId, fieldId])
+  @@index([spaceId, datasetId, fieldId])
+}
+
+model Metric {
+  id          String  @id @default(cuid())
+  spaceId     String
+  datasetId   String
+  key         String
+  name        String
+  description String?
+  definition  String // JSON, formula, filters, time rules, dimensions and aggregation rules
+
+  dataset Dataset @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+
+  @@unique([spaceId, datasetId, key])
+}
+
+model DatasetJoin {
+  id            String @id @default(cuid())
+  spaceId       String
+  connectionId  String
+  fromDatasetId String
+  toDatasetId   String
+  key           String
+  cardinality   String // one_to_one | one_to_many | many_to_one | many_to_many
+  fieldPairs    String // JSON, ordered pairs of field keys
+
+  fromDataset Dataset @relation("JoinFrom", fields: [spaceId, connectionId, fromDatasetId], references: [spaceId, connectionId, id], onDelete: Restrict)
+  toDataset   Dataset @relation("JoinTo", fields: [spaceId, connectionId, toDatasetId], references: [spaceId, connectionId, id], onDelete: Restrict)
+
+  @@unique([spaceId, connectionId, fromDatasetId, key])
+  @@index([spaceId, connectionId, toDatasetId])
+}
+
+model DatasetSnapshot {
+  id          String    @id @default(cuid())
+  spaceId     String
+  datasetId   String
+  status      String    @default("queued") // queued | running | succeeded | failed
+  storageRef  String?
+  rowCount    Int?
+  dataAsOf    DateTime?
+  errorCode   String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  dataset Dataset                @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+  active  ActiveDatasetSnapshot?
+
+  @@unique([spaceId, datasetId, id])
+  @@index([spaceId, datasetId, createdAt])
+}
+
+model ActiveDatasetSnapshot {
+  spaceId    String
+  datasetId  String
+  snapshotId String
+
+  dataset  Dataset         @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+  snapshot DatasetSnapshot @relation(fields: [spaceId, datasetId, snapshotId], references: [spaceId, datasetId, id], onDelete: Restrict)
+
+  @@id([spaceId, datasetId])
+  @@unique([spaceId, datasetId, snapshotId])
+}
+
+model KnowledgeGrant {
+  spaceId String
+  userId  String
+  topic   String // Directory identifier in docs/knowledge
+
+  member SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+
+  @@id([spaceId, userId, topic])
+}
+
+// Immutable query definition. Editing a saved query creates a new row.
+model QueryDefinition {
   id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      String   @default("member") // member | developer | admin
+  spaceId   String
+  datasetId String
+  kind      String // structured | sql
+  spec      String // JSON, template without credentials
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  dataset    Dataset          @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+  charts     Chart[]
+  executions QueryExecution[]
+
+  @@unique([spaceId, id])
+  @@index([spaceId, datasetId])
+}
+
+model Chart {
+  id          String    @id @default(cuid())
+  spaceId     String
+  queryId     String
+  createdById String
+  origin      String    @default("web") // web | api | mcp
+  name        String
+  display     String // JSON, chart type and display settings
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  query     QueryDefinition           @relation(fields: [spaceId, queryId], references: [spaceId, id], onDelete: Restrict)
+  creator   SpaceMember               @relation(fields: [spaceId, createdById], references: [spaceId, userId], onDelete: Restrict)
+  knowledge ChartKnowledgeReference[]
+  cards     DashboardCard[]
+
+  @@unique([spaceId, id])
+  @@index([spaceId, queryId])
+  @@index([spaceId, createdById])
+  @@index([spaceId, archivedAt, updatedAt])
+}
+
+model ChartKnowledgeReference {
+  spaceId String
+  chartId String
+  topic   String
+  version Int
+
+  chart Chart @relation(fields: [spaceId, chartId], references: [spaceId, id], onDelete: Cascade)
+
+  @@id([spaceId, chartId, topic, version])
+}
+
+model Dashboard {
+  id            String    @id @default(cuid())
+  spaceId       String
+  createdById   String
+  name          String
+  description   String?
+  origin        String    @default("web") // web | api | mcp
+  visibility    String    @default("private") // private | space
+  publishedAt   DateTime?
+  archivedAt    DateTime?
+  version       Int       @default(1)
+  filters       String    @default("[]") // JSON, filter definitions and defaults
+  refreshPolicy String? // JSON
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  space     Space               @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+  creator   SpaceMember         @relation(fields: [spaceId, createdById], references: [spaceId, userId], onDelete: Restrict)
+  cards     DashboardCard[]
+  favorites DashboardFavorite[]
+  grants    DashboardGrant[]
+
+  @@unique([spaceId, id])
+  @@index([spaceId, archivedAt, updatedAt])
+  @@index([spaceId, createdById])
+}
+
+model DashboardCard {
+  id            String  @id @default(cuid())
+  spaceId       String
+  dashboardId   String
+  chartId       String
+  titleOverride String?
+  layout        String // JSON, coordinates and dimensions
+  filterMapping String? // JSON, dashboard-to-chart filter bindings
+
+  dashboard Dashboard @relation(fields: [spaceId, dashboardId], references: [spaceId, id], onDelete: Cascade)
+  chart     Chart     @relation(fields: [spaceId, chartId], references: [spaceId, id], onDelete: Restrict)
+
+  @@index([spaceId, dashboardId])
+  @@index([spaceId, chartId])
+}
+
+model DashboardFavorite {
+  spaceId     String
+  userId      String
+  dashboardId String
+  createdAt   DateTime @default(now())
+
+  member    SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+  dashboard Dashboard   @relation(fields: [spaceId, dashboardId], references: [spaceId, id], onDelete: Cascade)
+
+  @@id([spaceId, userId, dashboardId])
+  @@index([spaceId, dashboardId])
+}
+
+model DashboardGrant {
+  spaceId     String
+  dashboardId String
+  userId      String
+  permission  String @default("view") // view | edit
+
+  dashboard Dashboard   @relation(fields: [spaceId, dashboardId], references: [spaceId, id], onDelete: Cascade)
+  member    SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+
+  @@id([spaceId, dashboardId, userId])
+  @@index([spaceId, userId])
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  spaceId    String
+  userId     String
+  name       String
+  prefix     String
+  digest     String    @unique
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  owner       SpaceMember      @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Restrict)
+  scopes      ApiKeyScope[]
+  executions  QueryExecution[]
+  auditEvents AuditEvent[]
+
+  @@unique([spaceId, userId, id])
+  @@index([spaceId, userId, createdAt])
+}
+
+model ApiKeyScope {
+  apiKeyId String
+  scope    String
+
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@id([apiKeyId, scope])
+}
+
+model QueryExecution {
+  id              String    @id @default(cuid())
+  spaceId         String
+  queryId         String
+  userId          String
+  apiKeyId        String?
+  origin          String
+  status          String    @default("queued") // queued | running | succeeded | failed | timed_out | cancelled | denied
+  parameters      String? // JSON, sanitized effective filters
+  provenance      String? // JSON, sources, knowledge versions, data times and actual time range
+  resultRef       String?
+  resultExpiresAt DateTime?
+  rowCount        Int?
+  truncated       Boolean   @default(false)
+  errorCode       String?
+  createdAt       DateTime  @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  query  QueryDefinition @relation(fields: [spaceId, queryId], references: [spaceId, id], onDelete: Restrict)
+  actor  SpaceMember     @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Restrict)
+  apiKey ApiKey?         @relation(fields: [spaceId, userId, apiKeyId], references: [spaceId, userId, id], onDelete: Restrict)
+
+  @@index([status, createdAt])
+  @@index([spaceId, queryId, createdAt])
+  @@index([spaceId, userId, apiKeyId, createdAt])
+  @@index([resultExpiresAt])
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  spaceId    String
+  userId     String
+  apiKeyId   String?
+  origin     String
+  action     String
+  targetType String?
+  targetId   String?
+  status     String
+  durationMs Int?
+  details    String? // JSON, sanitized scope and event metadata
+  createdAt  DateTime @default(now())
+
+  actor  SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Restrict)
+  apiKey ApiKey?     @relation(fields: [spaceId, userId, apiKeyId], references: [spaceId, userId, id], onDelete: Restrict)
+
+  @@index([spaceId, createdAt])
+  @@index([spaceId, userId, apiKeyId, createdAt])
+}
+
+model IdempotentMutation {
+  spaceId     String
+  userId      String
+  operation   String
+  key         String
+  requestHash String
+  resourceId  String
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  actor SpaceMember @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+
+  @@id([spaceId, userId, operation, key])
+  @@index([expiresAt])
 }

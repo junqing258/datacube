@@ -5,7 +5,7 @@ import { Link, useHref, useSearchParams } from 'react-router-dom';
 import { Dialog, PageHeading } from '../components/PageParts';
 import { chartLibrary, type Board } from '../data/demo';
 import { BoardChart } from './BoardCharts';
-import { NewChartDialog } from './NewChartDialog';
+import { NewChartSheet } from './NewChartSheet';
 import { type CustomChart } from '../data/customCharts';
 
 const filters = [
@@ -33,7 +33,8 @@ export function DashboardsPage({
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [editingBoard, setEditingBoard] = useState<string>();
-  const [dialog, setDialog] = useState<'share' | 'archive' | 'rename' | 'charts' | 'new-chart'>();
+  const [dialog, setDialog] = useState<'share' | 'archive' | 'rename' | 'charts'>();
+  const [chartSheetBoard, setChartSheetBoard] = useState<string>();
   const [status, setStatus] = useState('');
   const board = boards.find((item) => item.id === query.get('board'));
   const boardHref = useHref({
@@ -106,6 +107,7 @@ export function DashboardsPage({
     setQuery(id ? { board: id } : {});
     setEditingBoard(undefined);
     setDialog(undefined);
+    setChartSheetBoard(undefined);
     setStatus('');
     window.scrollTo(0, 0);
   }
@@ -283,7 +285,11 @@ export function DashboardsPage({
                 {!board.archived && (
                   <>
                     {board.cards.length > 0 && (
-                      <button className="dc-btn" onClick={() => setDialog('new-chart')}>
+                      <button
+                        type="button"
+                        className="dc-btn"
+                        onClick={() => setChartSheetBoard(board.id)}
+                      >
                         ＋ 新建图表
                       </button>
                     )}
@@ -347,7 +353,11 @@ export function DashboardsPage({
               <h2>这个看板还没有图表</h2>
               {!board.archived && !presenting && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button className="dc-btn dc-btn-primary" onClick={() => setDialog('new-chart')}>
+                  <button
+                    type="button"
+                    className="dc-btn dc-btn-primary"
+                    onClick={() => setChartSheetBoard(board.id)}
+                  >
                     ＋ 新建图表
                   </button>
                   <button className="dc-btn" onClick={() => setDialog('charts')}>
@@ -467,12 +477,13 @@ export function DashboardsPage({
           </button>
         </Dialog>
       )}
-      {board && !board.archived && dialog === 'new-chart' && (
-        <NewChartDialog
-          onClose={() => setDialog(undefined)}
+      {board && !board.archived && chartSheetBoard === board.id && (
+        <NewChartSheet
+          boardName={board.name}
+          onClose={() => setChartSheetBoard(undefined)}
           onCreate={(chart) => {
             createChart(board.id, chart);
-            setDialog(undefined);
+            setChartSheetBoard(undefined);
             setStatus('图表已创建并添加到当前看板');
           }}
         />

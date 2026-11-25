@@ -34,15 +34,17 @@ pnpm install                 # 安装依赖
 cd apps/server && cp -n .env.example .env && cd ../..
 pnpm prisma:migrate          # 初始化数据库
 
-pnpm dev                     # 同时启动 web (5173) + server (3001)
+pnpm dev                     # 同时启动 Web (5173) 和 API（默认 3001）
 ```
 
 单独启动：
 
 ```bash
 pnpm dev:web                 # http://localhost:5173
-pnpm dev:server              # http://localhost:3001/api，Swagger 文档 /api/docs
+pnpm dev:server              # API 默认端口 3001，Swagger 文档 /api/docs
 ```
+
+Vite 的 `/api` 代理与 Nest 使用相同的 `PORT` 优先级：进程环境变量、`apps/server/.env.local`、`apps/server/.env`，默认 `3001`。修改端口后重启前后端开发服务。
 
 ## SSH 一键部署
 

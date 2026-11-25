@@ -57,10 +57,12 @@ export function Dialog({
   title,
   onClose,
   children,
+  className,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -70,7 +72,12 @@ export function Dialog({
   }, []);
 
   return (
-    <dialog ref={ref} className="dc-dialog" aria-labelledby="dialog-title" onCancel={onClose}>
+    <dialog
+      ref={ref}
+      className={className ? `dc-dialog ${className}` : 'dc-dialog'}
+      aria-labelledby="dialog-title"
+      onCancel={onClose}
+    >
       <div className="flex items-center justify-between gap-4">
         <h2 id="dialog-title">{title}</h2>
         <button type="button" className="dc-btn" aria-label="关闭" onClick={onClose}>

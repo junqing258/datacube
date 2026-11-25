@@ -220,7 +220,8 @@
     height: clamp(16rem, 55dvh, 48rem);
   }
 
-  body:has(.dc-board-presentation) {
+  body:has(.dc-board-presentation),
+  body:has(.dc-sheet[open]) {
     overflow: hidden;
   }
 
@@ -234,6 +235,26 @@
 
   .dc-dialog form {
     @apply mt-4 grid gap-4;
+  }
+
+  .dc-dialog.dc-sheet {
+    @apply inset-y-0 left-auto right-0 m-0 h-[100dvh] max-h-none w-full max-w-[680px] overscroll-contain rounded-none border-y-0 border-r-0 shadow-xl;
+  }
+
+  .dc-sheet[open] {
+    animation: dc-sheet-enter 180ms ease-out;
+  }
+
+  @keyframes dc-sheet-enter {
+    from {
+      transform: translateX(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dc-sheet[open] {
+      animation: none;
+    }
   }
 
   .dc-document :is(p, ul, ol, table, h2, h3) {

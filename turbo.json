@@ -15,6 +15,7 @@
     },
     "dev": {
       "cache": false,
+      "passThroughEnv": ["PORT"],
       "persistent": true
     },
     "start:dev": {

@@ -28,6 +28,8 @@ export function BoardChart({
   const [batch, setBatch] = useState<(typeof processingSamples)[number]>();
   const chart = customChart ?? chartLibrary.find((item) => item.id === id);
   if (!chart) return null;
+  const chartKind =
+    customChart?.kind ?? (chart.kind === 'line' || chart.kind === 'bar' ? chart.kind : undefined);
 
   const knowledge =
     'topic' in chart
@@ -44,7 +46,7 @@ export function BoardChart({
           </button>
         )}
       </div>
-      {(chart.kind === 'line' || chart.kind === 'bar') && (
+      {chartKind && chartKind !== 'table' && (
         <Suspense
           fallback={
             <div className="my-2 h-56 sm:h-60" role="status">
@@ -52,8 +54,14 @@ export function BoardChart({
             </div>
           }
         >
-          <SalesChart kind={chart.kind} title={chart.name} customChart={customChart} />
+          <SalesChart kind={chartKind} title={chart.name} customChart={customChart} />
         </Suspense>
+      )}
+      {customChart?.kind === 'table' && (
+        <DataTable
+          headers={['标签', '数值']}
+          rows={customChart.points.map(({ label, value }) => [label, value])}
+        />
       )}
       {chart.kind === 'inventory' && (
         <>
