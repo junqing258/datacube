@@ -212,6 +212,22 @@
     @apply whitespace-nowrap bg-surface-tint font-semibold text-body;
   }
 
+  .dc-board-presentation {
+    @apply fixed inset-0 z-50 overflow-auto overscroll-contain bg-canvas p-4 text-ink sm:p-8;
+  }
+
+  .dc-board-presentation .dc-chart {
+    height: clamp(16rem, 55dvh, 48rem);
+  }
+
+  body:has(.dc-board-presentation) {
+    overflow: hidden;
+  }
+
+  body:has(.dc-board-presentation) :is(.dc-aside, .dc-header) {
+    display: none;
+  }
+
   .dc-dialog {
     @apply max-h-[calc(100dvh-2rem)] w-[min(540px,calc(100%-2rem))] overflow-auto rounded-card border border-hairline bg-canvas p-6 text-ink backdrop:bg-black/40;
   }
@@ -244,4 +260,11 @@
   .dc-code {
     @apply overflow-x-auto p-3;
   }
+}
+
+.dc-chart {
+  --chart-primary: theme('colors.primary.DEFAULT');
+  --chart-muted: theme('colors.muted');
+  --chart-grid: theme('colors.hairline.DEFAULT');
+  --chart-area: theme('colors.surface.warm');
 }

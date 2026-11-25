@@ -1,30 +1,38 @@
 import { Link } from 'react-router-dom';
 import { DataTable, Dialog } from '../components/PageParts';
 import { chartLibrary, liveSamples, processingSamples, warehouseSamples } from '../data/demo';
-import { useState } from 'react';
+import { type CustomChart } from '../data/customCharts';
+import { lazy, Suspense, useState } from 'react';
+
+const SalesChart = lazy(() => import('../components/SalesChart'));
 
 const format = new Intl.NumberFormat('zh-CN').format;
-const salesTrend =
-  'M45 150 L95 128 L145 140 L195 96 L245 103 L295 88 L345 128 L395 121 L445 145 L495 128 L545 150 L580 135';
 const lossRate = (row: (typeof processingSamples)[number]) =>
   ((row.waste / row.input) * 100).toFixed(1);
 
 export function BoardChart({
   id,
+  customChart,
   boardId,
   warehouse,
   onRemove,
+  presenting = false,
 }: {
   id: string;
+  customChart?: CustomChart;
   boardId: string;
   warehouse: string;
   onRemove?: () => void;
+  presenting?: boolean;
 }) {
   const [batch, setBatch] = useState<(typeof processingSamples)[number]>();
-  const chart = chartLibrary.find((item) => item.id === id);
+  const chart = customChart ?? chartLibrary.find((item) => item.id === id);
   if (!chart) return null;
 
-  const knowledge = `/knowledge/${chart.topic}/${chart.knowledgeVersion}?${new URLSearchParams({ board: boardId })}`;
+  const knowledge =
+    'topic' in chart
+      ? `/knowledge/${chart.topic}/${chart.knowledgeVersion}?${new URLSearchParams({ board: boardId })}`
+      : undefined;
 
   return (
     <section className="dc-page-card flex flex-col">
@@ -36,64 +44,16 @@ export function BoardChart({
           </button>
         )}
       </div>
-      {chart.kind === 'line' && (
-        <>
-          <p className="text-xs text-muted">● 本月　 ┄ 上月同期</p>
-          <svg
-            className="my-4 w-full text-[12px]"
-            viewBox="0 0 600 225"
-            role="img"
-            aria-label="销售额趋势"
-          >
-            {[8, 6, 4, 2].map((value, index) => {
-              const y = 40 + index * 45;
-              return (
-                <g key={value}>
-                  <line x1="45" x2="580" y1={y} y2={y} className="stroke-hairline" />
-                  <text x="0" y={y + 4}>
-                    {value}万
-                  </text>
-                </g>
-              );
-            })}
-            <path
-              d="M45 145 L95 120 L145 135 L195 75 L245 95 L295 60 L345 85 L395 56 L445 90 L495 65 L545 83 L580 55"
-              fill="none"
-              className="stroke-muted"
-              strokeWidth="2"
-              strokeDasharray="5 5"
-            />
-            <path d={salesTrend + ' L580 185 L45 185Z'} className="fill-surface-warm" />
-            <path d={salesTrend} fill="none" className="stroke-primary" strokeWidth="3" />
-            {['11/01', '11/05', '11/10', '11/15', '11/20', '11/25'].map((date, index) => (
-              <text key={date} x={45 + index * 102} y="210">
-                {date}
-              </text>
-            ))}
-          </svg>
-        </>
-      )}
-      {chart.kind === 'bar' && (
-        <ul className="my-4 grid gap-5">
-          {[
-            { label: '微信小程序', value: 54, color: 'bg-primary' },
-            { label: '平台电商', value: 38.7, color: 'bg-primary/75' },
-            { label: '直播渠道', value: 25.6, color: 'bg-primary/50' },
-            { label: '其他渠道', value: 10.3, color: 'bg-primary/25' },
-          ].map(({ label, value, color }) => (
-            <li
-              key={label}
-              className="grid grid-cols-[75px_minmax(0,1fr)_55px] items-center gap-2 text-xs"
-            >
-              <span>{label}</span>
-              <span
-                className={`h-4 rounded-sm ${color}`}
-                style={{ width: `${(value / 54) * 100}%` }}
-              />
-              <span className="text-right text-muted">{value.toFixed(1)}万</span>
-            </li>
-          ))}
-        </ul>
+      {(chart.kind === 'line' || chart.kind === 'bar') && (
+        <Suspense
+          fallback={
+            <div className="my-2 h-56 sm:h-60" role="status">
+              图表加载中…
+            </div>
+          }
+        >
+          <SalesChart kind={chart.kind} title={chart.name} customChart={customChart} />
+        </Suspense>
       )}
       {chart.kind === 'inventory' && (
         <>
@@ -123,9 +83,17 @@ export function BoardChart({
                   {lossRate(row)}%
                 </strong>,
                 row.received,
-                <button className="dc-btn whitespace-nowrap" onClick={() => setBatch(row)}>
-                  查看批次
-                </button>,
+                presenting ? (
+                  row.received === row.output ? (
+                    '一致'
+                  ) : (
+                    '待核对'
+                  )
+                ) : (
+                  <button className="dc-btn whitespace-nowrap" onClick={() => setBatch(row)}>
+                    查看批次
+                  </button>
+                ),
               ])}
           />
         </>
@@ -146,11 +114,13 @@ export function BoardChart({
       )}
       <footer className="mt-auto pt-4">
         <p className="text-xs text-muted">来源 · {chart.dataset}</p>
-        <Link className="dc-btn-text mt-2" to={knowledge}>
-          查看口径 · {chart.knowledgeVersion} →
-        </Link>
+        {!presenting && knowledge && 'knowledgeVersion' in chart && (
+          <Link className="dc-btn-text mt-2" to={knowledge}>
+            查看口径 · {chart.knowledgeVersion} →
+          </Link>
+        )}
       </footer>
-      {batch && (
+      {batch && knowledge && (
         <Dialog title={`${batch.batch} · ${batch.warehouse}`} onClose={() => setBatch(undefined)}>
           <DataTable
             headers={['来源', '批次记录']}

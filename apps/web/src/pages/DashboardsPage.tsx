@@ -1,9 +1,12 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Maximize, Minimize } from 'lucide-react';
 import { BoardCard } from '../components/BoardCard';
 import { Link, useHref, useSearchParams } from 'react-router-dom';
 import { Dialog, PageHeading } from '../components/PageParts';
 import { chartLibrary, type Board } from '../data/demo';
 import { BoardChart } from './BoardCharts';
+import { NewChartDialog } from './NewChartDialog';
+import { type CustomChart } from '../data/customCharts';
 
 const filters = [
   { id: 'all', label: '全部' },
@@ -15,14 +18,22 @@ interface Props {
   boards: Board[];
   updateBoard: (id: string, changes: Partial<Board>) => void;
   addBoard: (board: Board) => void;
+  customCharts: CustomChart[];
+  createChart: (boardId: string, chart: CustomChart) => void;
 }
 
-export function DashboardsPage({ boards, updateBoard, addBoard }: Props) {
+export function DashboardsPage({
+  boards,
+  updateBoard,
+  addBoard,
+  customCharts,
+  createChart,
+}: Props) {
   const [query, setQuery] = useSearchParams();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [editingBoard, setEditingBoard] = useState<string>();
-  const [dialog, setDialog] = useState<'share' | 'archive' | 'rename' | 'charts'>();
+  const [dialog, setDialog] = useState<'share' | 'archive' | 'rename' | 'charts' | 'new-chart'>();
   const [status, setStatus] = useState('');
   const board = boards.find((item) => item.id === query.get('board'));
   const boardHref = useHref({
@@ -31,6 +42,55 @@ export function DashboardsPage({ boards, updateBoard, addBoard }: Props) {
   });
   const shareUrl = new URL(boardHref, window.location.href).href;
   const original = boards.find((item) => item.id === query.get('copy'));
+  const [presentationBoard, setPresentationBoard] = useState<string>();
+  const boardView = useRef<HTMLElement>(null);
+  const fullscreenButton = useRef<HTMLButtonElement>(null);
+  const exitButton = useRef<HTMLButtonElement>(null);
+  const presenting = Boolean(board && presentationBoard === board.id);
+
+  useEffect(() => {
+    if (!presenting) return;
+
+    const view = boardView.current;
+    let nativeFullscreen = document.fullscreenElement === view;
+    exitButton.current?.focus();
+    function exitOnEscape(event: KeyboardEvent) {
+      if (
+        event.key === 'Escape' &&
+        !event.defaultPrevented &&
+        !document.querySelector('dialog[open]')
+      ) {
+        setPresentationBoard(undefined);
+      }
+    }
+    function syncFullscreen() {
+      if (document.fullscreenElement === view) {
+        nativeFullscreen = true;
+      } else if (nativeFullscreen) {
+        setPresentationBoard(undefined);
+      }
+    }
+
+    document.addEventListener('keydown', exitOnEscape);
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    return () => {
+      document.removeEventListener('keydown', exitOnEscape);
+      document.removeEventListener('fullscreenchange', syncFullscreen);
+      if (view && document.fullscreenElement === view)
+        void document.exitFullscreen().catch(() => {});
+      fullscreenButton.current?.focus();
+    };
+  }, [presenting]);
+
+  function enterPresentation() {
+    const view = boardView.current;
+    if (!board || !view) return;
+    setPresentationBoard(board.id);
+    view.requestFullscreen?.().catch(() => {
+      // Keep the viewport-filling presentation when native fullscreen is unavailable.
+    });
+  }
+
   const creating = query.has('new') || Boolean(original);
   const editing = Boolean(board && editingBoard === board.id);
   const active = boards.filter((item) => !item.archived);
@@ -126,111 +186,139 @@ export function DashboardsPage({ boards, updateBoard, addBoard }: Props) {
           )}
         </>
       ) : (
-        <>
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <Link
-              className="dc-btn-text"
-              to="/dashboards"
-              onClick={() => {
-                setEditingBoard(undefined);
-                setStatus('');
-              }}
-            >
-              ← 所有看板
-            </Link>
-            <select
-              aria-label="切换看板"
-              className="dc-control"
-              value={board.id}
-              onChange={(event) => open(event.target.value)}
-            >
-              {(board.archived ? [...active, board] : active).map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+        <section ref={boardView} className={presenting ? 'dc-board-presentation' : undefined}>
+          <div hidden={presenting}>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <Link
+                className="dc-btn-text"
+                to="/dashboards"
+                onClick={() => {
+                  setEditingBoard(undefined);
+                  setStatus('');
+                }}
+              >
+                ← 所有看板
+              </Link>
+              <select
+                aria-label="切换看板"
+                className="dc-control"
+                value={board.id}
+                onChange={(event) => open(event.target.value)}
+              >
+                {(board.archived ? [...active, board] : active).map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <PageHeading title={board.name} description={board.description}>
-            <span className="dc-tag">{board.archived ? '已归档' : `v${board.version}`}</span>
-          </PageHeading>
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-            {['inventory', 'processing'].includes(board.type) ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <select
-                  className="dc-control"
-                  aria-label="仓库"
-                  value={warehouse}
-                  onChange={(event) => updateBoard(board.id, { warehouse: event.target.value })}
-                >
-                  <option value="">全部仓库</option>
-                  <option>一号仓</option>
-                  <option>二号仓</option>
-                </select>
-                <span className="text-muted">11 月 25 日示例</span>
-              </div>
-            ) : (
-              <span className="text-muted">
-                {board.type === 'sales'
-                  ? '11 月 1–25 日销售样例'
-                  : board.type === 'channel'
-                    ? '11 月 25 日直播场次样例'
-                    : '演示数据'}
-              </span>
-            )}
-            <div className="flex flex-wrap items-center gap-2">
+            {presenting ? (
               <button
+                ref={exitButton}
+                type="button"
                 className="dc-btn"
-                aria-pressed={board.favorite}
-                onClick={() => updateBoard(board.id, { favorite: !board.favorite })}
+                onClick={() => setPresentationBoard(undefined)}
               >
-                {board.favorite ? '★ 已收藏' : '☆ 收藏'}
+                <Minimize size={16} aria-hidden="true" /> 退出全屏
               </button>
-              <Link className="dc-btn" to={`?board=${board.id}&copy=${board.id}`}>
-                复制
-              </Link>
-              <button className="dc-btn" onClick={() => setDialog('share')}>
-                分享
-              </button>
-              <button className="dc-btn" onClick={() => setDialog('archive')}>
-                {board.archived ? '恢复' : '归档'}
-              </button>
-              <button className="dc-btn" onClick={() => setStatus('已刷新当前看板的演示结果')}>
-                ↻ 刷新
-              </button>
-              {!board.archived && (
-                <>
-                  {board.cards.length > 0 && (
-                    <button className="dc-btn" onClick={() => setDialog('charts')}>
-                      ＋ 添加已有图表
-                    </button>
-                  )}
-                  <button
-                    className="dc-btn dc-btn-primary"
-                    onClick={() => {
-                      if (editing) updateBoard(board.id, { version: board.version + 1 });
-                      setEditingBoard(editing ? undefined : board.id);
-                    }}
+            ) : (
+              <span className="dc-tag">{board.archived ? '已归档' : `v${board.version}`}</span>
+            )}
+          </PageHeading>
+          <div hidden={presenting}>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              {['inventory', 'processing'].includes(board.type) ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <select
+                    className="dc-control"
+                    aria-label="仓库"
+                    value={warehouse}
+                    onChange={(event) => updateBoard(board.id, { warehouse: event.target.value })}
                   >
-                    {editing ? '完成编辑' : '编辑看板'}
-                  </button>
-                </>
+                    <option value="">全部仓库</option>
+                    <option>一号仓</option>
+                    <option>二号仓</option>
+                  </select>
+                  <span className="text-muted">11 月 25 日示例</span>
+                </div>
+              ) : (
+                <span className="text-muted">
+                  {board.type === 'sales'
+                    ? '11 月 1–25 日销售样例'
+                    : board.type === 'channel'
+                      ? '11 月 25 日直播场次样例'
+                      : '演示数据'}
+                </span>
               )}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  className="dc-btn"
+                  aria-pressed={board.favorite}
+                  onClick={() => updateBoard(board.id, { favorite: !board.favorite })}
+                >
+                  {board.favorite ? '★ 已收藏' : '☆ 收藏'}
+                </button>
+                <Link className="dc-btn" to={`?board=${board.id}&copy=${board.id}`}>
+                  复制
+                </Link>
+                <button className="dc-btn" onClick={() => setDialog('share')}>
+                  分享
+                </button>
+                <button className="dc-btn" onClick={() => setDialog('archive')}>
+                  {board.archived ? '恢复' : '归档'}
+                </button>
+                <button className="dc-btn" onClick={() => setStatus('已刷新当前看板的演示结果')}>
+                  ↻ 刷新
+                </button>
+                <button
+                  ref={fullscreenButton}
+                  type="button"
+                  className="dc-btn"
+                  onClick={enterPresentation}
+                >
+                  <Maximize size={16} aria-hidden="true" /> 全屏
+                </button>
+                {!board.archived && (
+                  <>
+                    {board.cards.length > 0 && (
+                      <button className="dc-btn" onClick={() => setDialog('new-chart')}>
+                        ＋ 新建图表
+                      </button>
+                    )}
+                    {board.cards.length > 0 && (
+                      <button className="dc-btn" onClick={() => setDialog('charts')}>
+                        ＋ 添加已有图表
+                      </button>
+                    )}
+                    <button
+                      className="dc-btn dc-btn-primary"
+                      onClick={() => {
+                        if (editing) updateBoard(board.id, { version: board.version + 1 });
+                        setEditingBoard(editing ? undefined : board.id);
+                      }}
+                    >
+                      {editing ? '完成编辑' : '编辑看板'}
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
+            {status && (
+              <p className="mt-3 text-muted" role="status">
+                {status}
+              </p>
+            )}
+            {editing && (
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-input bg-primary-soft p-3">
+                <span>可改名或调整当前看板的图表。</span>
+                <button className="dc-btn" onClick={() => setDialog('rename')}>
+                  修改名称
+                </button>
+              </div>
+            )}
           </div>
-          {status && (
-            <p className="mt-3 text-muted" role="status">
-              {status}
-            </p>
-          )}
-          {editing && (
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-input bg-primary-soft p-3">
-              <span>可改名或调整当前看板的图表。</span>
-              <button className="dc-btn" onClick={() => setDialog('rename')}>
-                修改名称
-              </button>
-            </div>
-          )}
           {board.cards.length ? (
             <div
               className={`mt-5 grid gap-4 ${board.cards.length > 1 ? 'min-[1150px]:grid-cols-2' : ''}`}
@@ -239,10 +327,12 @@ export function DashboardsPage({ boards, updateBoard, addBoard }: Props) {
                 <BoardChart
                   key={`${board.id}-${id}`}
                   id={id}
+                  customChart={customCharts.find((chart) => chart.id === id)}
                   boardId={board.id}
                   warehouse={warehouse}
+                  presenting={presenting}
                   onRemove={
-                    editing
+                    editing && !presenting
                       ? () =>
                           updateBoard(board.id, {
                             cards: board.cards.filter((item) => item !== id),
@@ -255,18 +345,24 @@ export function DashboardsPage({ boards, updateBoard, addBoard }: Props) {
           ) : (
             <section className="dc-page-card mt-5">
               <h2>这个看板还没有图表</h2>
-              <p className="my-3 text-muted">从已有图表中选择，或通过外部 MCP / Skill 创建。</p>
-              {!board.archived && (
-                <button className="dc-btn dc-btn-primary" onClick={() => setDialog('charts')}>
-                  ＋ 添加已有图表
-                </button>
+              {!board.archived && !presenting && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button className="dc-btn dc-btn-primary" onClick={() => setDialog('new-chart')}>
+                    ＋ 新建图表
+                  </button>
+                  <button className="dc-btn" onClick={() => setDialog('charts')}>
+                    ＋ 添加已有图表
+                  </button>
+                </div>
               )}
             </section>
           )}
-          <p className="mt-5 text-muted">
-            {board.cards.length} 张图表 · {board.source}创建
-          </p>
-        </>
+          {!presenting && (
+            <p className="mt-5 text-muted">
+              {board.cards.length} 张图表 · {board.source}创建
+            </p>
+          )}
+        </section>
       )}
       {(creating || dialog === 'rename') && (
         <Dialog
@@ -371,10 +467,20 @@ export function DashboardsPage({ boards, updateBoard, addBoard }: Props) {
           </button>
         </Dialog>
       )}
-      {board && dialog === 'charts' && (
+      {board && !board.archived && dialog === 'new-chart' && (
+        <NewChartDialog
+          onClose={() => setDialog(undefined)}
+          onCreate={(chart) => {
+            createChart(board.id, chart);
+            setDialog(undefined);
+            setStatus('图表已创建并添加到当前看板');
+          }}
+        />
+      )}
+      {board && !board.archived && dialog === 'charts' && (
         <Dialog title="添加已有图表" onClose={() => setDialog(undefined)}>
           <p className="my-3 text-muted">添加共享图表引用。</p>
-          {chartLibrary.map((chart) => (
+          {[...chartLibrary, ...customCharts].map((chart) => (
             <div
               key={chart.id}
               className="flex items-center justify-between gap-3 border-b border-hairline-soft py-3"
