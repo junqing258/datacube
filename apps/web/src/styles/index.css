@@ -10,7 +10,7 @@
   }
 
   body {
-    @apply bg-canvas font-sans text-ink;
+    @apply bg-surface-soft font-sans text-ink;
     font-size: 14px;
     line-height: 1.5;
   }
@@ -24,7 +24,7 @@
   }
 
   :where(a, button, input, select, textarea):focus-visible {
-    @apply rounded-sm outline-none ring-2 ring-primary ring-offset-2 ring-offset-canvas;
+    @apply rounded-sm outline-none ring-2 ring-focus ring-offset-2 ring-offset-canvas;
   }
 }
 
@@ -33,20 +33,28 @@
     @apply fixed inset-y-0 left-0 z-20 flex w-56 flex-col border-r border-hairline bg-canvas px-4 pb-4 pt-6;
   }
 
+  .dc-workspace {
+    @apply ml-56;
+  }
+
+  .dc-content {
+    @apply mx-auto max-w-[1800px] px-[clamp(24px,3vw,48px)];
+  }
+
   .dc-header {
-    @apply ml-56 flex min-h-16 items-center justify-between gap-3 border-b border-hairline px-[clamp(24px,4vw,56px)] text-body;
+    @apply border-b border-hairline bg-canvas text-body;
   }
 
   .dc-main {
-    @apply ml-56 min-h-[calc(100vh-64px)] max-w-[1700px] px-[clamp(24px,4vw,56px)] pb-24 pt-9;
+    @apply min-h-[calc(100vh-64px)] pb-24 pt-9;
   }
 
   .dc-brand {
-    @apply flex items-center gap-2.5 self-start px-2 text-[23px] font-[650] leading-none tracking-[-0.9px] text-ink;
+    @apply flex items-center gap-2.5 self-start px-2 text-[23px] font-bold leading-none text-brand;
   }
 
   .dc-logo {
-    @apply grid size-[31px] shrink-0 place-items-center rounded-[9px] bg-primary;
+    @apply grid size-[31px] shrink-0 place-items-center rounded bg-brand;
   }
 
   .dc-logo-mark {
@@ -58,39 +66,35 @@
   }
 
   .dc-nav-link {
-    @apply flex min-h-11 items-center gap-3 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-medium text-body transition-colors hover:bg-surface-soft hover:text-ink;
+    @apply flex min-h-11 items-center gap-3 whitespace-nowrap rounded-card px-3.5 py-2 text-sm font-medium text-body transition-colors hover:bg-surface-warm hover:text-ink;
   }
 
   .dc-nav-link-active {
-    @apply bg-primary-soft text-primary hover:bg-primary-soft hover:text-primary;
+    @apply bg-primary text-white hover:bg-primary-hover hover:text-white;
   }
 
   .dc-btn {
-    @apply inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-pill border border-transparent bg-hairline-soft px-4 py-2 text-sm font-semibold leading-snug text-ink transition-colors disabled:opacity-50;
+    @apply inline-flex min-h-10 items-center justify-center gap-1.5 rounded border border-field-border bg-canvas px-4 py-2.5 text-sm font-medium leading-snug text-ink transition-colors;
   }
 
   .dc-btn:hover {
-    background-color: #e2e6ed;
+    @apply bg-surface-tint;
   }
 
   .dc-btn-primary {
-    @apply min-h-11 bg-primary px-5 text-white;
+    @apply border-primary bg-primary text-white;
   }
 
   .dc-btn-primary:hover {
-    @apply bg-primary-hover;
+    @apply border-primary-hover bg-primary-hover;
   }
 
-  .dc-btn-on-dark {
-    @apply min-h-11 border-[#454955] bg-transparent text-white;
-  }
-
-  .dc-btn-on-dark:hover {
-    @apply bg-[#262a34];
+  .dc-btn:disabled {
+    @apply border-hairline bg-surface-soft text-muted;
   }
 
   .dc-btn-text {
-    @apply inline-flex items-center gap-1 rounded-sm bg-transparent p-0 text-sm font-semibold text-primary;
+    @apply inline-flex items-center gap-1 rounded-sm bg-transparent p-0 text-sm font-semibold text-link;
   }
 
   .dc-btn-text:hover {
@@ -117,8 +121,7 @@
     @apply w-[184px];
   }
 
-  .dc-header,
-  .dc-main {
+  .dc-workspace {
     @apply ml-[184px];
   }
 }
@@ -128,12 +131,20 @@
     @apply static w-auto border-b border-r-0 px-4 pt-3;
   }
 
+  .dc-workspace {
+    @apply ml-0;
+  }
+
+  .dc-content {
+    @apply px-4;
+  }
+
   .dc-header {
-    @apply ml-0 min-h-[47px] px-4 text-xs;
+    @apply text-xs;
   }
 
   .dc-main {
-    @apply ml-0 px-4 pb-16 pt-5;
+    @apply pb-16 pt-5;
   }
 
   .dc-brand {
@@ -146,5 +157,91 @@
 
   .dc-nav-link {
     @apply min-h-10 gap-1.5 px-2;
+  }
+}
+
+@layer components {
+  .dc-page-heading {
+    @apply flex flex-wrap items-center justify-between gap-4;
+  }
+
+  .dc-page-heading h1,
+  .dc-document h1 {
+    @apply font-display text-[clamp(28px,4vw,40px)] font-normal leading-tight;
+  }
+
+  .dc-page-card {
+    @apply dc-card min-w-0 p-5 sm:p-6;
+  }
+
+  .dc-page-card h2,
+  .dc-dialog h2 {
+    @apply text-xl font-extrabold;
+  }
+
+  .dc-page-card h3 {
+    @apply text-base font-bold;
+  }
+
+  .dc-columns {
+    @apply grid gap-4 min-[1050px]:grid-cols-2;
+  }
+
+  .dc-control {
+    @apply min-h-10 max-w-full rounded-input border border-field-border bg-canvas px-3 py-2 text-ink;
+  }
+
+  .dc-field {
+    @apply grid gap-1.5 text-sm font-medium;
+  }
+
+  .dc-table-scroll {
+    @apply mt-4 overflow-x-auto;
+  }
+
+  .dc-table {
+    @apply w-full border-collapse text-left text-[13px];
+  }
+
+  .dc-table th,
+  .dc-table td {
+    @apply border-b border-hairline-soft px-3 py-3 align-middle;
+  }
+
+  .dc-table th {
+    @apply whitespace-nowrap bg-surface-tint font-semibold text-body;
+  }
+
+  .dc-dialog {
+    @apply max-h-[calc(100dvh-2rem)] w-[min(540px,calc(100%-2rem))] overflow-auto rounded-card border border-hairline bg-canvas p-6 text-ink backdrop:bg-black/40;
+  }
+
+  .dc-dialog form {
+    @apply mt-4 grid gap-4;
+  }
+
+  .dc-document :is(p, ul, ol, table, h2, h3) {
+    @apply mt-4;
+  }
+
+  .dc-document :is(ul, ol) {
+    @apply space-y-2 pl-6;
+  }
+
+  .dc-document ul {
+    @apply list-disc;
+  }
+  .dc-document ol {
+    @apply list-decimal;
+  }
+  .dc-document table {
+    @apply dc-table;
+  }
+  .dc-document code,
+  .dc-code {
+    @apply rounded-input bg-surface-soft px-2 py-1 font-mono text-[13px];
+  }
+  .dc-code {
+    @apply overflow-x-auto p-3;
   }
 }

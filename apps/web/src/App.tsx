@@ -1,41 +1,44 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useState } from 'react';
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
+import { dashboards, type Board } from './data/demo';
+import { AiAccessPage, type DemoKey } from './pages/AiAccessPage';
+import { DashboardsPage } from './pages/DashboardsPage';
+import { DataSourcesPage } from './pages/DataSourcesPage';
 import { HomePage } from './pages/HomePage';
-import { PlaceholderPage } from './pages/PlaceholderPage';
+import { KnowledgePage } from './pages/KnowledgePage';
 
-// 主导航：首页、看板、业务知识、数据接入、AI接入
 export function App() {
+  const [boards, setBoards] = useState(dashboards);
+  const [keys, setKeys] = useState<DemoKey[]>([]);
+
+  function updateBoard(id: string, changes: Partial<Board>) {
+    setBoards((current) =>
+      current.map((board) => (board.id === id ? { ...board, ...changes } : board)),
+    );
+  }
+
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AppShell>
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage boards={boards} updateBoard={updateBoard} />} />
           <Route
             path="/dashboards"
-            element={<PlaceholderPage title="团队看板" description="管理团队共享的看板与图表。" />}
-          />
-          <Route
-            path="/knowledge"
             element={
-              <PlaceholderPage title="业务知识" description="查阅指标口径、使用规则和数据来源。" />
-            }
-          />
-          <Route
-            path="/data-sources"
-            element={<PlaceholderPage title="数据接入" description="管理数据库和业务 API 连接。" />}
-          />
-          <Route
-            path="/ai-access"
-            element={
-              <PlaceholderPage
-                title="AI接入"
-                description="在外部 AI 工具中分析数据，结果保存到 DataCube。"
+              <DashboardsPage
+                boards={boards}
+                updateBoard={updateBoard}
+                addBoard={(board) => setBoards((current) => [...current, board])}
               />
             }
           />
+          <Route path="/knowledge/:topic?/:version?" element={<KnowledgePage />} />
+          <Route path="/data-sources" element={<DataSourcesPage />} />
+          <Route path="/ai-access" element={<AiAccessPage keys={keys} setKeys={setKeys} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppShell>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

@@ -19,7 +19,7 @@ const $=s=>document.querySelector(s);const names=['首页','看板','业务知�
 function toast(s){let e=document.createElement('div');e.className='toast';e.textContent=s;document.body.append(e);setTimeout(()=>e.remove(),2600)}function variant(n){v=['A','B','C'][(['A','B','C'].indexOf(v)+n+3)%3];let u=new URL(location);u.searchParams.set('variant',v);history.replaceState(null,'',u);page=0;render()}document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.target.isContentEditable)return;if(e.key==='ArrowLeft')variant(-1);if(e.key==='ArrowRight')variant(1)});
 const dashboards = [
   { id: 'sales', name: '电商销售总览', description: '微信小程序、平台电商及其他渠道的成交与退款', type: 'sales', favorite: true, archived: false, source: 'MCP', cards: ['sales-trend', 'channel-sales'], version: 1 },
-  { id: 'inventory', name: '双仓库存与缺货', description: '按仓库查看可用库存、临期和缺货情况', type: 'inventory', favorite: true, archived: false, source: 'MCP', cards: ['inventory-health'], version: 1 },
+  { id: 'inventory', name: '多仓库存与缺货', description: '按仓库查看可用库存、临期和缺货情况', type: 'inventory', favorite: true, archived: false, source: 'MCP', cards: ['inventory-health'], version: 1 },
   { id: 'processing', name: '加工损耗与入库核对', description: '按加工批次核对投料、报损、合格产出和入库重量', type: 'processing', favorite: true, archived: false, source: 'MCP', cards: ['processing-loss'], version: 1 },
   { id: 'channel', name: '直播经营复盘', description: '按直播场次比较成交与退款，查看整体渠道结构', type: 'channel', favorite: true, archived: false, source: 'Skill', cards: ['live-performance', 'channel-sales'], version: 1 }
 ];
@@ -63,7 +63,7 @@ function boards(items) {
 function home() {
   const activeBoards = dashboards.filter(board => !board.archived);
   const hero = `<section class="hero-band">
-    <div class="hero-copy"><h1>生鲜经营总览</h1><p>查看电商销售、双仓库存、加工损耗和直播经营。</p>
+    <div class="hero-copy"><h1>经营总览</h1><p>查看电商销售、多仓库存、加工损耗和直播经营。</p>
       <div class="hero-actions"><button class="primary" onclick="boardDialog()">＋ 新建看板</button>
         <button class="secondary-dark" onclick="go(1)">所有看板 →</button></div>
     </div>${operationsSummary()}</section>`;

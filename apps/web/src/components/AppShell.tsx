@@ -16,11 +16,18 @@ const NAV_ITEMS = [
 function EnvironmentPill() {
   const { data } = useQuery({ queryKey: ['health'], queryFn: getHealth });
   const healthy = data?.database === 'up';
+  const databaseDown = data?.database === 'down';
+  const label = databaseDown ? '数据服务 · 异常' : healthy ? '数据服务 · 正常' : '演示数据';
 
   return (
     <span className="inline-flex shrink-0 items-center gap-[7px] rounded-pill bg-surface-soft px-3 py-1.5 text-xs">
-      <span className={clsx('size-[7px] rounded-full', healthy ? 'bg-up' : 'bg-primary')} />
-      {healthy ? '数据服务 · 正常' : '演示数据'}
+      <span
+        className={clsx(
+          'size-[7px] rounded-full',
+          databaseDown ? 'bg-down' : healthy ? 'bg-up' : 'bg-primary',
+        )}
+      />
+      {label}
     </span>
   );
 }
@@ -61,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto hidden items-center gap-2.5 border-t border-hairline-soft px-2 pt-3.5 min-[700px]:flex">
+        <div className="mt-auto hidden items-center gap-2.5 border-t border-hairline-soft px-2 pt-3.5 min-[701px]:flex">
           <span className="grid size-9 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
             林
           </span>
@@ -71,13 +78,17 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </div>
       </aside>
-      <header className="dc-header">
-        <span className="min-w-0 truncate">
-          经营分析空间 / <b className="font-[650] text-ink">{current.label}</b>
-        </span>
-        <EnvironmentPill />
-      </header>
-      <main className="dc-main">{children}</main>
+      <div className="dc-workspace">
+        <header className="dc-header">
+          <div className="dc-content flex min-h-16 items-center justify-between gap-3 max-[700px]:min-h-[47px]">
+            <span className="min-w-0 truncate">
+              经营分析空间 / <b className="font-[650] text-ink">{current.label}</b>
+            </span>
+            <EnvironmentPill />
+          </div>
+        </header>
+        <main className="dc-content dc-main">{children}</main>
+      </div>
     </div>
   );
 }
