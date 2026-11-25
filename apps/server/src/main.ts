@@ -3,14 +3,16 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import { join } from 'node:path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('PORT', 3000);
+  const port = configService.get<number>('PORT', 3001);
   const apiPrefix = configService.get<string>('API_PREFIX', 'api');
 
   app.setGlobalPrefix(apiPrefix);
@@ -36,6 +38,16 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+
+  const webRoot = configService.get<string>('WEB_ROOT');
+  if (webRoot) {
+    app.useStaticAssets(join(webRoot, 'assets'), {
+      prefix: '/assets',
+      immutable: true,
+      maxAge: '1y',
+    });
+    app.useStaticAssets(webRoot, { maxAge: 0 });
+  }
 
   await app.listen(port);
   console.log(`DataCube server listening on http://localhost:${port}/${apiPrefix}`);

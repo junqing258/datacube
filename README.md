@@ -34,15 +34,27 @@ pnpm install                 # 安装依赖
 cd apps/server && cp -n .env.example .env && cd ../..
 pnpm prisma:migrate          # 初始化数据库
 
-pnpm dev                     # 同时启动 web (5173) + server (3000)
+pnpm dev                     # 同时启动 web (5173) + server (3001)
 ```
 
 单独启动：
 
 ```bash
 pnpm dev:web                 # http://localhost:5173
-pnpm dev:server              # http://localhost:3000/api，Swagger 文档 /api/docs
+pnpm dev:server              # http://localhost:3001/api，Swagger 文档 /api/docs
 ```
+
+## SSH 一键部署
+
+本地需要 Docker Engine、Buildx、Docker Compose 和 SSH。目标 Linux 主机需要 Bash、Docker、支持 `up --wait` 的 Compose，以及 `gzip`、`tar` 和 `flock`。SSH 用户须能写入部署目录并运行 Docker。
+
+1. 将 `.env.deploy.example` 复制为 `.env.deploy`。填写 `DEPLOY_SSH_TARGET`（如 `deploy@example.com`），并将 `JWT_SECRET` 替换为部署专用随机值（可用 `openssl rand -hex 32` 生成）。
+2. 执行 `DEPLOY_DRY_RUN=1 pnpm run deploy` 校验 Compose 配置。
+3. 执行 `pnpm run deploy` 构建、上传并启动服务。部署成功后，通过目标主机的 `DATACUBE_PORT` 访问 Web（默认 `3001`）。同一端口提供 `/api`、`/api/docs` 和 `/api/health`。
+
+Web 由 NestJS 直接提供，Compose 只启动一个 Server 容器。容器启动时执行 Prisma 迁移，SQLite 数据存放在 Compose 的 `data` 卷中。默认部署目录为 `/opt/datacube`，后续更新在同一目录执行相同的部署命令即可复用数据卷。
+
+可用 `pnpm run deploy test` 读取 `.env.test`。环境专用文件会覆盖可选的根目录 `.env`。同一主机上的不同环境应使用不同的部署目录末级名称和端口，以隔离 Compose 项目及数据库。
 
 ## 常用命令
 

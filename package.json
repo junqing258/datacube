@@ -17,6 +17,7 @@
     "build": "npx turbo run build",
     "build:web": "pnpm --filter datacube-web run build",
     "build:server": "pnpm --filter datacube-server run build",
+    "deploy": "bash scripts/deploy-apps-ssh.sh",
     "clean": "pnpm -r exec rm -rf dist node_modules .turbo",
     "clean:modules": "pnpm -r exec rm -rf node_modules",
     "clean:dist": "pnpm -r exec rm -rf dist",

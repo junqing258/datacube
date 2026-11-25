@@ -1,0 +1,28 @@
+services:
+  server:
+    image: ${DATACUBE_SERVER_IMAGE:?部署脚本必须提供镜像名称}
+    restart: unless-stopped
+    ports:
+      - '${DATACUBE_PORT:-3001}:3001'
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?请配置 JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+    volumes:
+      - data:/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - >
+          Promise.all([fetch('http://127.0.0.1:3001/api/health').then(async r =>
+          r.ok && (await r.json()).database === 'up'),
+          fetch('http://127.0.0.1:3001/').then(r => r.ok)])
+          .then(results => process.exit(results.every(Boolean) ? 0 : 1))
+          .catch(() => process.exit(1))
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 15s
+volumes:
+  data:
