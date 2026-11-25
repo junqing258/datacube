@@ -1,0 +1,41 @@
+{
+  "name": "datacube-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint --fix src",
+    "test": "echo \"web: no test runner yet\" && exit 0"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.14.2",
+    "axios": "^1.6.2",
+    "chart.js": "^4.6.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.553.0",
+    "radix-ui": "^1.8.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router": "^7.9.6",
+    "react-router-dom": "^7.9.6",
+    "react-simple-maps": "^5.0.5",
+    "tailwind-merge": "^3.7.1",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react-swc": "^3.5.0",
+    "autoprefixer": "^10.4.16",
+    "oxlint": "^1.95.0",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}

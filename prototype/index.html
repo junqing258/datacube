@@ -1,29 +1,21 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DataCube · 产品原型</title><style>
-:root{--bg:#f6f8fa;--ink:#172c31;--muted:#809095;--line:#e4eaeb;--green:#157b65;--soft:#eaf4ef}*{box-sizing:border-box}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC',sans-serif;color:var(--ink);background:var(--bg)}button,input,textarea,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:white;color:var(--ink);border-radius:8px;padding:10px 15px}button:hover{border-color:var(--green);background:#f2f8f5}.primary{background:var(--green);color:white;border-color:var(--green)}.primary:hover{background:#10634f;color:white}aside{position:fixed;inset:0 auto 0 0;width:220px;background:#fff;border-right:1px solid var(--line);padding:30px 18px;display:flex;flex-direction:column}.brand{font-size:23px;font-weight:750;letter-spacing:-1px;padding:0 12px 30px}.logo{display:inline-block;color:var(--green);margin-right:9px}.space{background:var(--bg);border:1px solid var(--line);padding:12px;border-radius:8px;margin-bottom:25px;font-size:12px}nav button{display:block;width:100%;text-align:left;border:0;margin:5px 0;padding:13px 15px;color:#617377;background:transparent}nav button.active{background:var(--soft);color:var(--green);font-weight:650}.navicon{display:inline-block;width:28px}.asidebottom{margin-top:auto;font-size:12px;color:var(--muted);padding:15px}.avatar{background:#dcebe6;border-radius:50%;padding:8px;color:var(--green);margin-right:8px}header{height:76px;border-bottom:1px solid var(--line);background:#ffffffc9;display:flex;align-items:center;justify-content:space-between;padding:0 40px;margin-left:220px;font-size:13px;color:#74858a}header b{color:var(--ink)}main{margin-left:220px;padding:35px 40px 100px;max-width:1800px}.row{display:flex;align-items:center;justify-content:space-between;gap:15px}.muted{color:var(--muted);font-size:12px}.eyebrow{color:var(--green);font-size:11px;letter-spacing:2px;font-weight:700}h1{font-size:30px;font-weight:650;letter-spacing:-1px;margin:12px 0}h2{font-size:18px;font-weight:650}h3{font-size:14px;margin:0 0 14px}.hero{max-width:850px;margin:50px auto 44px;text-align:center}.hero p{color:#7e8e92;line-height:1.8}.askbox{background:white;border:1px solid #b8d2c8;border-radius:15px;padding:18px;text-align:left;box-shadow:0 8px 35px #1b554c08;margin-top:28px}.askbox textarea{border:0;resize:none;outline:none;width:100%;height:65px;background:transparent;color:var(--ink)}.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.chips button{font-size:12px;color:#60777a;background:#fff;padding:9px 12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{background:white;border:1px solid var(--line);border-radius:12px;padding:22px}.click{cursor:pointer}.click:hover{box-shadow:0 8px 24px #173e3009;border-color:#aacfc0}.tag{font-size:10px;padding:4px 7px;background:var(--soft);color:var(--green);border-radius:4px}.mini{height:78px;display:flex;align-items:end;gap:7px;margin:24px 0}.mini i{flex:1;background:#a7cebf;border-radius:3px 3px 0 0}.section{margin-top:30px}.list{width:100%;border-collapse:collapse;background:white}td,th{text-align:left;border-bottom:1px solid var(--line);padding:17px;font-size:13px}th{font-size:11px;color:var(--muted);font-weight:500}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}.value{font-size:29px;font-weight:650;letter-spacing:-1px;margin:12px 0}.down{color:#c47a58;font-size:12px}.up{color:var(--green);font-size:12px}.chartgrid{display:grid;grid-template-columns:1.6fr 1fr;gap:18px}.chart{width:100%;height:230px}.chart text{font-size:10px;fill:#8c999c}.legend{font-size:11px;color:var(--muted)}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:5px}.workspace{display:grid;grid-template-columns:310px 1fr;gap:22px;margin-top:24px}.chat{background:#edf2ef;padding:22px;border-radius:12px;min-height:620px}.bubble{background:white;padding:15px;border-radius:9px;font-size:13px;line-height:1.8;margin:15px 0}.bubble.user{background:#dcebe3}.steps{font-size:12px;line-height:2.5;color:#5e7770}.insight{border-left:3px solid var(--green);padding:15px 20px;background:#eff6f2;line-height:1.9;margin-top:18px;font-size:13px}.tabs{display:flex;gap:6px;margin:20px 0}.tabs button.on{color:var(--green);background:var(--soft)}pre{white-space:pre-wrap;background:#172e32;color:#d2e8df;padding:22px;border-radius:9px;line-height:1.8;font-size:12px}.switcher{position:fixed;bottom:19px;left:calc(50% + 110px);transform:translateX(-50%);background:#183337;color:white;padding:7px;border-radius:30px;box-shadow:0 4px 20px #152b3025;display:flex;align-items:center;gap:12px;font-size:11px;z-index:15}.switcher button{background:transparent;color:white;border:0;padding:6px 12px}.toast{position:fixed;right:30px;bottom:35px;background:#173d32;color:white;padding:15px 25px;border-radius:10px;z-index:40}.overlay{position:fixed;inset:0;background:#102e3466;display:flex;align-items:center;justify-content:center;z-index:30}.modal{background:white;border-radius:15px;padding:30px;width:520px;max-height:90vh;overflow:auto}.field{display:block;margin:18px 0;font-size:12px}.field input,.field select{width:100%;border:1px solid var(--line);border-radius:7px;padding:11px;margin-top:8px}.sourceicon{width:44px;height:44px;display:grid;place-items:center;background:#eff5f4;border-radius:10px;color:var(--green);font-weight:700;margin-bottom:18px}.banner{font-size:11px;background:#fff8e9;color:#9d7c37;padding:8px 15px;border-radius:6px;margin-bottom:22px}.compacthome .hero{margin:0;text-align:left;max-width:none}.compacthome .askbox{max-width:none}.editorhome{display:grid;grid-template-columns:1fr 1.4fr;gap:25px}.editorhome .hero{text-align:left;margin:20px 0}.editorhome .grid{grid-template-columns:1fr}.editorhome .mini{display:none}@media(max-width:1000px){aside{width:175px}main,header{margin-left:175px}main{padding:25px 22px 90px}.grid,.kpis{grid-template-columns:repeat(2,1fr)}.workspace{grid-template-columns:250px 1fr}.chartgrid,.editorhome{grid-template-columns:1fr}.switcher{left:55%}}@media(max-width:700px){aside{position:static;width:100%;padding:15px}nav{display:flex;overflow:auto}nav button{white-space:nowrap}.brand{padding-bottom:10px}.space,.asidebottom{display:none}main,header{margin-left:0}header{padding:0 20px;height:50px}.workspace,.grid,.kpis{grid-template-columns:1fr}.chat{min-height:auto}.hero{margin:20px auto}.switcher{left:50%;white-space:nowrap}h1{font-size:25px}}
-.knowledge-topic p,.knowledge-facts,.knowledge-history,.knowledge-review,details{line-height:1.75}
-.knowledge-heading,.knowledge-tabs,.knowledge-actions{flex-wrap:wrap}
-.knowledge-actions{display:flex;gap:8px;margin-top:20px}
-.knowledge-facts{display:grid;grid-template-columns:100px 1fr;gap:10px 16px;margin:24px 0}
-.knowledge-facts dt{color:#617377}.knowledge-facts dd{margin:0;overflow-wrap:anywhere}
-.knowledge-link{color:var(--green);border:0;padding:5px 0}.knowledge-link:hover{background:transparent;text-decoration:underline}
-.knowledge-history+.knowledge-history{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
-.knowledge-review{background:#f4f8f6;border:1px solid var(--line);border-radius:10px;padding:20px}
-.knowledge-review ul,.knowledge-topic ul{padding-left:22px}
-.knowledge-review h3:not(:first-child){margin-top:24px}
-.field textarea{width:100%;border:1px solid var(--line);border-radius:7px;padding:11px;margin-top:8px;resize:vertical}
-button:disabled{cursor:default;opacity:.5}
-details summary{cursor:pointer;color:var(--green);margin:12px 0}
-#net-sales-editor{scroll-margin:18px}
-@media(max-width:700px){.knowledge-facts{grid-template-columns:80px 1fr}.modal{width:calc(100% - 24px)}}
-
-.chartgrid>.card{min-width:0}.table-scroll{overflow:auto}.table-scroll td,.table-scroll th{white-space:nowrap}
-.operations-watch{display:flex;align-items:center;justify-content:space-between;gap:14px;border-left:3px solid #a56029}
-.operations-watch h2{margin:10px 0}.operations-watch p{margin:0;line-height:1.6}
-.attention{color:#884716;background:#fff1e1}
-@media(max-width:760px){.operations-watch{align-items:flex-start;flex-direction:column}}
-</style></head><body><aside><div class="brand"><span class="logo">◈</span>DataCube<span style="font-size:10px;color:#99aaa7;margin-left:5px">AI</span></div><div class="space">▦　经营分析空间 <span style="float:right">⌄</span></div><nav id="nav"></nav><div class="asidebottom">内部部署 · 演示环境<br><br><span class="avatar">林</span> 林晓 / 业务管理员</div></aside><header><span>工作空间　/　<b id="crumb">首页</b></span><span><span class="dot"></span>数据服务正常　　帮助 ↗</span></header><main id="app"></main><div class="switcher"><button onclick="variant(-1)">←</button><span id="variantlabel"></span><button onclick="variant(1)">→</button></div><div id="modal"></div><script>
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DataCube · 产品原型</title><link rel="stylesheet" href="theme.css">
+</head>
+<body>
+  <aside>
+    <button class="brand" onclick="go(0)"><span class="logo" aria-hidden="true"></span>DataCube</button>
+    <div class="space">经营分析空间</div>
+    <nav id="nav" aria-label="主导航"></nav>
+    <div class="asidebottom"><span class="avatar" aria-hidden="true">林</span><div><strong>林晓</strong><small>业务管理员</small></div></div>
+  </aside>
+  <header><span>经营分析空间 / <b id="crumb">首页</b></span><span class="environment"><span class="dot"></span>演示数据</span></header>
+  <main id="app"></main>
+  <div class="switcher" aria-label="切换原型布局">
+    <button aria-label="上一种布局" onclick="variant(-1)">←</button><span id="variantlabel"></span><button aria-label="下一种布局" onclick="variant(1)">→</button>
+  </div>
+  <div id="modal"></div>
+<script src="knowledge-data.js"></script><script>
 // Throwaway UI prototype: three structural home variants, selected through ?variant=A/B/C. All mutations are in memory.
-const $=s=>document.querySelector(s);const names=['首页','看板','业务知识','数据接入','MCP / Skill'];const icons=['⌂','▦','▤','⇄','⌘'];let page=0,period='本月';let v=new URLSearchParams(location.search).get('variant')||'A';const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=s=>document.querySelector(s);const names=['首页','看板','业务知识','数据接入','AI接入'];const icons=['⌂','▦','▤','⇄','⌘'];let page=0,period='本月';let v=new URLSearchParams(location.search).get('variant')||'A';const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toast(s){let e=document.createElement('div');e.className='toast';e.textContent=s;document.body.append(e);setTimeout(()=>e.remove(),2600)}function variant(n){v=['A','B','C'][(['A','B','C'].indexOf(v)+n+3)%3];let u=new URL(location);u.searchParams.set('variant',v);history.replaceState(null,'',u);page=0;render()}document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)||e.target.isContentEditable)return;if(e.key==='ArrowLeft')variant(-1);if(e.key==='ArrowRight')variant(1)});
 const dashboards = [
   { id: 'sales', name: '电商销售总览', description: '微信小程序、平台电商及其他渠道的成交与退款', type: 'sales', favorite: true, archived: false, source: 'MCP', cards: ['sales-trend', 'channel-sales'], version: 1 },
@@ -32,11 +24,11 @@ const dashboards = [
   { id: 'channel', name: '直播经营复盘', description: '按直播场次比较成交与退款，查看整体渠道结构', type: 'channel', favorite: true, archived: false, source: 'Skill', cards: ['live-performance', 'channel-sales'], version: 1 }
 ];
 const chartLibrary = [
-  { id: 'sales-trend', name: '销售额趋势', kind: 'line', dataset: '商城订单与退款', metricVersion: 1 },
-  { id: 'channel-sales', name: '渠道销售额分布', kind: 'bar', dataset: '商城订单与退款', metricVersion: 1 },
-  { id: 'inventory-health', name: '仓库库存快照', kind: 'inventory', dataset: 'WMS 库存快照', topic: 'inventory' },
-  { id: 'processing-loss', name: '加工批次与损耗', kind: 'processing', dataset: 'ERP 加工单 · WMS 入库单', topic: 'processing' },
-  { id: 'live-performance', name: '按场次看成交与退款', kind: 'live', dataset: '直播平台订单 · 商城退款', topic: 'live' }
+  { id: 'sales-trend', name: '销售额趋势', kind: 'line', dataset: '商城订单与退款', topic: 'sales', knowledgeVersion: 'v1' },
+  { id: 'channel-sales', name: '渠道销售额分布', kind: 'bar', dataset: '商城订单与退款', topic: 'sales', knowledgeVersion: 'v1' },
+  { id: 'inventory-health', name: '仓库库存快照', kind: 'inventory', dataset: 'WMS 库存快照', topic: 'inventory', knowledgeVersion: 'v1' },
+  { id: 'processing-loss', name: '加工批次与损耗', kind: 'processing', dataset: 'ERP 加工单 · WMS 入库单', topic: 'processing', knowledgeVersion: 'v1' },
+  { id: 'live-performance', name: '按场次看成交与退款', kind: 'live', dataset: '直播平台订单 · 商城退款', topic: 'live', knowledgeVersion: 'v1' }
 ];
 let activeId=new URLSearchParams(location.search).get('board'),boardFilter='all',boardSearch='',sequence=0,editing=false;
 const current=()=>dashboards.find(b=>b.id===activeId);
@@ -44,17 +36,74 @@ function boardUrl(){let u=new URL(location);if(activeId)u.searchParams.set('boar
 let initialBoard=new URLSearchParams(location.search).get('board');
 function go(n){page=n;activeId=null;editing=false;boardUrl();render();window.scrollTo(0,0)}
 function openBoard(id){activeId=id;page=1;editing=false;boardUrl();render();window.scrollTo(0,0)}
-function mini(){return '<div class="mini">'+[28,42,35,56,45,68,55,76,60,70,49,64].map(h=>`<i style="height:${h}%"></i>`).join('')+'</div>'}
-function favorite(id){let b=dashboards.find(x=>x.id===id);b.favorite=!b.favorite;render()}
-function boards(items=dashboards.filter(b=>!b.archived)){return items.length?items.map(b=>`<div class="card"><div class="row"><span class="tag">${b.archived?'已归档':b.source==='手动'?'手动创建':b.source+' 创建'}</span><button aria-label="收藏 ${esc(b.name)}" onclick="favorite('${b.id}')">${b.favorite?'★':'☆'}</button></div><div class="click" onclick="openBoard('${b.id}')">${mini()}<h3>${esc(b.name)}</h3><p class="muted">${esc(b.description)}</p><span class="muted">${b.cards.length} 个图表 · v${b.version}</span></div><div class="row section"><button onclick="openBoard('${b.id}')">打开 →</button><button onclick="boardDialog('${b.id}')">复制</button></div></div>`).join(''):'<div class="card"><h3>暂无匹配看板</h3><p class="muted">修改搜索条件，或创建一个新看板。</p></div>'}
-function home(){let intro=`<div class="row"><div><span class="eyebrow">BUSINESS INTELLIGENCE</span><h1>生鲜经营总览</h1><p class="muted">查看电商销售、双仓库存、加工损耗和直播经营。</p></div><button class="primary" onclick="boardDialog()">＋ 新建看板</button></div>`;let recent=`<div class="card section"><h3>团队看板</h3><table class="list"><tr><th>看板</th><th>来源</th><th>版本</th><th></th></tr>${dashboards.filter(b=>!b.archived).map(b=>`<tr><td>${esc(b.name)}</td><td>${b.source}</td><td>v${b.version}</td><td><button onclick="openBoard('${b.id}')">打开 →</button></td></tr>`).join('')}</table></div>`;if(v==='B')return intro+operationsSummary()+kpis()+charts()+`<h2 class="section">全部看板</h2><div class="grid">${boards()}</div>`;if(v==='C')return intro+`<div class="editorhome section"><div class="card"><h2>团队数据资产</h2><p class="muted">维护可供外部 Agent 使用的数据定义。</p><button onclick="openKnowledge()">浏览业务知识 →</button><h2 class="section">外部工具接入</h2><p class="muted">通过 MCP 或 Skill 创建与更新看板。</p><button onclick="go(4)">管理 API Key →</button></div><div>${recent}</div></div>`;return intro+operationsSummary()+`<div class="row section"><h2>收藏看板</h2><button onclick="go(1)">查看全部 →</button></div><div class="grid">${boards(dashboards.filter(b=>b.favorite&&!b.archived))}</div>`+recent}
-function boardList(){return `<div class="row"><div><span class="eyebrow">DASHBOARDS</span><h1>团队看板</h1><p class="muted">经营分析空间 · ${dashboards.filter(b=>!b.archived).length} 个有效看板</p></div><button class="primary" onclick="boardDialog()">＋ 新建看板</button></div><div class="row section"><div class="tabs">${[['all','全部'],['favorites','收藏'],['archived','已归档']].map(([k,n])=>`<button class="${boardFilter===k?'on':''}" onclick="boardFilter='${k}';render()">${n}</button>`).join('')}</div><input aria-label="搜索看板" placeholder="搜索看板名称" value="${esc(boardSearch)}" oninput="boardSearch=this.value;document.querySelector('#boardcards').innerHTML=filteredBoards()" style="padding:11px;border:1px solid var(--line);border-radius:8px"></div><div id="boardcards" class="grid">${filteredBoards()}</div>`}
+const boardIcons = { sales: '↗', inventory: '▦', processing: '◫', channel: '▷', custom: '▤' };
+
+function favorite(id) {
+  const board = dashboards.find(item => item.id === id);
+  board.favorite = !board.favorite;
+  render();
+}
+
+function boards(items) {
+  if (!items.length) {
+    return '<div class="card"><h3>暂无匹配看板</h3><p class="muted">修改搜索条件，或创建一个新看板。</p></div>';
+  }
+  return items.map(board => `<article class="card board-card">
+    <div class="row">
+      <span class="board-icon" aria-hidden="true">${boardIcons[board.type] || boardIcons.custom}</span>
+      <button class="favorite-button" aria-label="收藏 ${esc(board.name)}" aria-pressed="${board.favorite}" onclick="favorite('${board.id}')">${board.favorite ? '★' : '☆'}</button>
+    </div>
+    <div><button class="board-open" onclick="openBoard('${board.id}')">${esc(board.name)} <span aria-hidden="true">↗</span></button>
+      <p class="muted">${esc(board.description)}</p></div>
+    <footer class="row"><span class="muted">${board.cards.length} 张图表${board.archived ? ' · 已归档' : ''}</span>
+      <button class="text-button" aria-label="复制 ${esc(board.name)}" onclick="boardDialog('${board.id}')">复制</button></footer>
+  </article>`).join('');
+}
+
+function home() {
+  const activeBoards = dashboards.filter(board => !board.archived);
+  const hero = `<section class="hero-band">
+    <div class="hero-copy"><h1>生鲜经营总览</h1><p>查看电商销售、双仓库存、加工损耗和直播经营。</p>
+      <div class="hero-actions"><button class="primary" onclick="boardDialog()">＋ 新建看板</button>
+        <button class="secondary-dark" onclick="go(1)">所有看板 →</button></div>
+    </div>${operationsSummary()}</section>`;
+
+  if (v === 'B') {
+    return `${hero}<section class="section"><h2>销售表现</h2>${kpis()}${charts()}</section>
+      <section class="section"><h2>团队看板</h2><div class="grid board-grid">${boards(activeBoards)}</div></section>`;
+  }
+  if (v === 'C') {
+    const rows = activeBoards.map(board => [
+      `<button class="text-button" onclick="openBoard('${board.id}')">${esc(board.name)}</button>`, board.source, 'v' + board.version
+    ]);
+    return `${hero}<div class="editorhome section">
+      <section class="card"><h2>团队看板</h2>${operationTable(['看板', '来源', '版本'], rows)}</section>
+      <section class="card"><h2>业务知识</h2><p class="muted">查阅看板与外部工具共用的指标口径。</p>
+        <button onclick="openKnowledge()">阅读业务知识 →</button>
+        <h2 class="section">AI接入</h2><button onclick="go(4)">管理 API Key →</button></section></div>`;
+  }
+  return `${hero}<section class="section"><div class="row board-section-head"><h2>收藏看板</h2>
+    <button class="text-button" onclick="go(1)">查看全部 →</button></div>
+    <div class="grid board-grid">${boards(activeBoards.filter(board => board.favorite))}</div></section>`;
+}
+
+function boardList() {
+  const filters = [['all', '全部'], ['favorites', '收藏'], ['archived', '已归档']];
+  return `<div class="row"><div><h1>团队看板</h1>
+    <p class="muted">${dashboards.filter(board => !board.archived).length} 个有效看板</p></div>
+    <button class="primary" onclick="boardDialog()">＋ 新建看板</button></div>
+    <div class="row board-filters"><div class="tabs" aria-label="看板状态">
+      ${filters.map(([key, name]) => `<button aria-pressed="${boardFilter === key}" class="${boardFilter === key ? 'on' : ''}" onclick="boardFilter='${key}';render()">${name}</button>`).join('')}
+    </div><input aria-label="搜索看板" placeholder="搜索看板名称" value="${esc(boardSearch)}"
+      oninput="boardSearch=this.value;document.querySelector('#boardcards').innerHTML=filteredBoards()"></div>
+    <div id="boardcards" class="grid board-grid section">${filteredBoards()}</div>`;
+}
 function filteredBoards(){return boards(dashboards.filter(b=>(boardFilter==='archived'?b.archived:!b.archived)&&(boardFilter!=='favorites'||b.favorite)&&b.name.toLowerCase().includes(boardSearch.toLowerCase())))}
 function boardDialog(copyId){let original=dashboards.find(b=>b.id===copyId);modal(`<div class="row"><h2>${original?'复制':'新建'}看板</h2><button onclick="closeModal()">×</button></div><label class="field">名称<input id="boardname" value="${original?esc(original.name+' 副本'):''}" placeholder="例如：月度经营分析"></label><label class="field">说明<input id="boarddesc" value="${original?esc(original.description):''}"></label><label class="field">空间<select><option>经营分析空间</option></select></label><p class="muted">${original?'复制布局和筛选，图表沿用共享定义。':'创建空白看板后，从已有图表添加内容，或通过外部 MCP / Skill 填充。'}</p><button class="primary" onclick="createBoard('${copyId||''}')">${original?'创建副本':'创建看板'}</button>`)}
 function createBoard(copyId){let name=$('#boardname').value.trim();if(!name){toast('请填写看板名称');return}let original=dashboards.find(b=>b.id===copyId);let b={id:'board-'+(++sequence),name,description:$('#boarddesc').value,source:'手动',favorite:false,archived:false,type:original?.type||'custom',cards:original?[...original.cards]:[],warehouse:original?.warehouse||'',version:1};dashboards.push(b);closeModal();openBoard(b.id);toast('已创建看板 · 当前演示会话内有效')}
 function kpis(){let vals=period==='本月'?['¥ 128.6 万','8,426','¥ 152.6','3.8%']:['¥ 141.2 万','8,982','¥ 157.2','4.1%'];return `<div class="kpis">${['净销售额','支付订单数','客单价','退款率'].map((t,i)=>`<div class="card"><span class="muted">${t}</span><div class="value">${vals[i]}</div><span class="${i===3?'up':'down'}">↘ ${['8.9','6.2','2.9','0.3'][i]}${i===3?' 个百分点':'%'} <span class="muted">较上月同期</span></span></div>`).join('')}</div>`}
-function line(){return `<svg class="chart" viewBox="0 0 600 225" role="img" aria-label="销售趋势图">${[40,85,130,175].map((y,i)=>`<line x1="45" x2="580" y1="${y}" y2="${y}" stroke="#edf0f0"/><text x="0" y="${y+4}">${[8,6,4,2][i]}万</text>`).join('')}<path d="M45 145 L95 120 L145 135 L195 75 L245 95 L295 60 L345 85 L395 56 L445 90 L495 65 L545 83 L580 55" fill="none" stroke="#c7d6d0" stroke-width="2" stroke-dasharray="5 5"/><path d="M45 150 L95 128 L145 140 L195 96 L245 103 L295 88 L345 128 L395 121 L445 145 L495 128 L545 150 L580 135 L580 185 L45 185Z" fill="#edf5f1"/><path d="M45 150 L95 128 L145 140 L195 96 L245 103 L295 88 L345 128 L395 121 L445 145 L495 128 L545 150 L580 135" fill="none" stroke="#23876d" stroke-width="3"/>${['11/01','11/05','11/10','11/15','11/20','11/25'].map((t,i)=>`<text x="${45+i*102}" y="210">${t}</text>`).join('')}</svg>`}
-function bars(){return `<div style="height:230px;padding-top:20px">${[['微信小程序',54,'#27866e'],['平台电商',38.7,'#7daf9b'],['直播渠道',25.6,'#b1cfc1'],['其他渠道',10.3,'#d4e4db']].map(([t,w,c])=>`<div style="display:flex;align-items:center;gap:15px;margin:22px 0;font-size:12px"><span style="width:55px">${t}</span><div style="width:${w/54*64}%;height:17px;border-radius:3px;background:${c}"></div><span class="muted">${w.toFixed(1)}万</span></div>`).join('')}</div>`}
+function line(){return `<svg class="chart" viewBox="0 0 600 225" role="img" aria-label="销售趋势图">${[40,85,130,175].map((y,i)=>`<line x1="45" x2="580" y1="${y}" y2="${y}" stroke="#eef0f3"/><text x="0" y="${y+4}">${[8,6,4,2][i]}万</text>`).join('')}<path d="M45 145 L95 120 L145 135 L195 75 L245 95 L295 60 L345 85 L395 56 L445 90 L495 65 L545 83 L580 55" fill="none" stroke="#a8acb3" stroke-width="2" stroke-dasharray="5 5"/><path d="M45 150 L95 128 L145 140 L195 96 L245 103 L295 88 L345 128 L395 121 L445 145 L495 128 L545 150 L580 135 L580 185 L45 185Z" fill="#edf3ff"/><path d="M45 150 L95 128 L145 140 L195 96 L245 103 L295 88 L345 128 L395 121 L445 145 L495 128 L545 150 L580 135" fill="none" stroke="#0052ff" stroke-width="3"/>${['11/01','11/05','11/10','11/15','11/20','11/25'].map((t,i)=>`<text x="${45+i*102}" y="210">${t}</text>`).join('')}</svg>`}
+function bars(){return `<div style="height:230px;padding-top:20px">${[['微信小程序',54,'#0052ff'],['平台电商',38.7,'#628fff'],['直播渠道',25.6,'#a2bbff'],['其他渠道',10.3,'#dbe6ff']].map(([t,w,c])=>`<div style="display:flex;align-items:center;gap:15px;margin:22px 0;font-size:12px"><span style="min-width:69px">${t}</span><div style="width:${w/54*64}%;height:17px;border-radius:3px;background:${c}"></div><span class="muted">${w.toFixed(1)}万</span></div>`).join('')}</div>`}
 function charts(){return `<div class="chartgrid"><div class="card"><div class="row"><h3>销售额趋势</h3><span class="legend"><span class="dot"></span>本月　 ┄ 上月同期</span></div>${line()}</div><div class="card"><h3>渠道销售额分布</h3>${bars()}</div></div>`}
 const warehouseSamples = [
   { warehouse: '一号仓', available: 6000, nearExpiry: 720, shortages: 2 },
@@ -112,17 +161,19 @@ function batchDetail(id) {
     <p>加工损耗率 <strong>${lossRate(row).toFixed(1)}%</strong> · 复核线 6%</p>
     <p>合格产出与入库记录相差 <strong>${row.output - row.received} kg</strong></p>
     <p class="muted">${row.output !== row.received ? '待核对入库单状态、同步时间和称重记录。入库差额需单独跟踪。' : '当前样例中合格产出与已入库重量一致。'}</p>
-    <button onclick="closeModal();openKnowledge('processing','指标口径')">查看损耗口径 →</button>`);
+    <button onclick="closeModal();openKnowledge('processing','v1')">查看损耗口径 →</button>`);
 }
 
 function operationsSummary() {
   const board = dashboards.find(item => item.id === 'processing');
   if (board.archived) return '';
-  return `<section class="card section operations-watch"><div>
-    <span class="tag attention">待复核</span>
-    <h2>${reviewBatch.warehouse}加工损耗率 ${lossRate(reviewBatch).toFixed(1)}%</h2>
-    <p>批次 ${reviewBatch.batch} 超过 6% 的示例复核线。ERP 合格产出与 WMS 已入库相差 ${reviewBatch.output - reviewBatch.received} kg。</p>
-  </div><button onclick="openBoard('processing')">打开加工损耗看板 →</button></section>`;
+  return `<section class="operations-watch">
+    <span class="tag">待复核 · ${reviewBatch.warehouse}</span>
+    <div class="watch-number numeric">${lossRate(reviewBatch).toFixed(1)}%</div>
+    <h2>加工损耗率</h2>
+    <p>批次 ${reviewBatch.batch} · 入库差额 ${reviewBatch.output - reviewBatch.received} kg</p>
+    <button class="text-button" onclick="openBoard('processing')">打开加工损耗看板 →</button>
+  </section>`;
 }
 
 function boardScope(board) {
@@ -154,265 +205,111 @@ function chartCard(id) {
     ${editing ? `<button onclick="removeCard('${id}')">移除</button>` : ''}</div>
     ${chartBodies[chart.kind]()}
     <p class="muted">来源 · ${chart.dataset}</p>
-    ${chart.metricVersion
-      ? `<button class="knowledge-link" onclick="openKnowledge('sales','指标口径',${chart.metricVersion})">净销售额 v${chart.metricVersion} · 查看口径 →</button>`
-      : `<button class="knowledge-link" onclick="openKnowledge('${chart.topic}','指标口径')">查看口径 →</button>`}</div>`;
+    <button class="knowledge-link" onclick="openKnowledge('${chart.topic}','${chart.knowledgeVersion}')">查看口径 · ${chart.knowledgeVersion} →</button></div>`;
 }
-function dashboard(){let b=current();if(!b)return boardList();return `<div class="row"><button onclick="go(1)">← 所有看板</button><select aria-label="切换看板" onchange="openBoard(this.value)">${dashboards.filter(x=>!x.archived||x.id===b.id).map(x=>`<option value="${x.id}" ${x.id===b.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div><div class="row section"><div><span class="eyebrow">DASHBOARD / ${b.id}</span><h1>${esc(b.name)} <span class="tag">${b.archived?'已归档':'v'+b.version}</span></h1><span class="muted">${esc(b.description)}</span></div><div><button onclick="favorite('${b.id}')">${b.favorite?'★ 已收藏':'☆ 收藏'}</button> <button onclick="boardDialog('${b.id}')">复制</button> <button onclick="shareBoard()">分享</button> <button onclick="archiveDialog()">${b.archived?'恢复':'归档'}</button></div></div><div class="row section"><div>${boardScope(b)}</div><div><button onclick="toast('已刷新当前看板的演示结果')">↻ 刷新</button> ${!b.archived?`<button onclick="addChartDialog()">＋ 添加已有图表</button> <button class="primary" onclick="editing=!editing;if(!editing)current().version++;render()">${editing?'完成编辑':'编辑看板'}</button>`:''}</div></div>${editing?`<div class="insight">正在编辑：可修改看板名称、移除卡片。移除只影响当前看板，不删除共享图表。<button onclick="renameDialog()">修改名称</button></div>`:''}${b.cards.length?`<div class="${b.cards.length>1?'chartgrid':'section'} section">${b.cards.map(chartCard).join('')}</div>`:`<div class="card section" style="text-align:center;padding:65px"><h2>这个看板还没有图表</h2><p class="muted">从已有图表中选择，或在外部工具通过 MCP / Skill 创建。</p>${!b.archived?'<button class="primary" onclick="addChartDialog()">＋ 添加已有图表</button>':''}</div>`}<p class="muted section">${esc(b.name)} · ${b.cards.length} 张图表 · ${b.source} 创建 · 当前看板独立配置</p>`}
+function dashboard() {
+  const board = current();
+  if (!board) return boardList();
+
+  const options = dashboards.filter(item => !item.archived || item.id === board.id).map(item =>
+    `<option value="${item.id}" ${item.id === board.id ? 'selected' : ''}>${esc(item.name)}</option>`
+  );
+  return `<div class="row detail-nav">
+    <button class="text-button" onclick="go(1)">← 所有看板</button>
+    <select aria-label="切换看板" onchange="openBoard(this.value)">${options.join('')}</select>
+  </div>
+  <div class="row"><div><h1>${esc(board.name)}</h1><p class="muted">${esc(board.description)}</p></div>
+    <span class="tag">${board.archived ? '已归档' : 'v' + board.version}</span>
+  </div>
+  <div class="row section detail-toolbar"><div class="detail-actions">${boardScope(board)}</div>
+    <div class="detail-actions">
+      <button aria-pressed="${board.favorite}" onclick="favorite('${board.id}')">${board.favorite ? '★ 已收藏' : '☆ 收藏'}</button>
+      <button onclick="boardDialog('${board.id}')">复制</button>
+      <button onclick="shareBoard()">分享</button>
+      <button onclick="archiveDialog()">${board.archived ? '恢复' : '归档'}</button>
+      <button onclick="toast('已刷新当前看板的演示结果')">↻ 刷新</button>
+      ${board.archived || !board.cards.length ? '' : '<button onclick="addChartDialog()">＋ 添加已有图表</button>'}
+      ${board.archived ? '' : `<button class="primary" onclick="editing=!editing;if(!editing)current().version++;render()">${editing ? '完成编辑' : '编辑看板'}</button>`}
+    </div>
+  </div>
+  ${editing ? `<div class="row insight"><span>可改名或调整当前看板的图表。</span><div class="detail-actions">
+    <button onclick="renameDialog()">修改名称</button>${board.cards.length ? '' : '<button onclick="addChartDialog()">＋ 添加已有图表</button>'}</div></div>` : ''}
+  ${board.cards.length ? `<div class="${board.cards.length > 1 ? 'chartgrid equal' : ''} section">${board.cards.map(chartCard).join('')}</div>` :
+    `<section class="card section"><h2>这个看板还没有图表</h2><p class="muted">从已有图表中选择，或通过外部 MCP / Skill 创建。</p>
+      ${board.archived || editing ? '' : '<button class="primary" onclick="addChartDialog()">＋ 添加已有图表</button>'}</section>`}
+  <p class="muted section">${board.cards.length} 张图表 · ${board.source}创建</p>`;
+}
 function addChartDialog(){let b=current();modal(`<div class="row"><h2>添加已有图表</h2><button onclick="closeModal()">×</button></div><p class="muted">添加共享图表引用，不修改原图表定义。</p>${chartLibrary.map(c=>`<div class="row section"><div><b>${c.name}</b><p class="muted">${c.dataset}</p></div><button ${b.cards.includes(c.id)?'disabled':''} onclick="current().cards.push('${c.id}');current().version++;closeModal();render()">${b.cards.includes(c.id)?'已添加':'添加'}</button></div>`).join('')}`)}
 function removeCard(id){let b=current();b.cards=b.cards.filter(x=>x!==id);render()}
 function renameDialog(){modal(`<h2>修改看板名称</h2><label class="field">名称<input id="rename" value="${esc(current().name)}"></label><button class="primary" onclick="let n=$('#rename').value.trim();if(n){current().name=n;closeModal();render()}else toast('名称不能为空')">应用</button>`)}
 function archiveDialog(){let b=current();modal(`<h2>${b.archived?'恢复':'归档'}看板</h2><p>${esc(b.name)}</p><p class="muted">${b.archived?'恢复后回到有效看板列表。':'归档后从默认列表移除，保留内容，可在已归档列表恢复。'}</p><button onclick="closeModal()">取消</button> <button class="primary" onclick="current().archived=!current().archived;closeModal();go(1)">确认</button>`)}
 function shareBoard(){let u=new URL(location);u.searchParams.set('board',activeId);modal(`<h2>看板独立链接</h2><pre id="boardlink">${esc(u.href)}</pre><p class="muted">访问仍需空间和数据权限。示例内置看板可刷新直达；新建看板仅存在当前会话，尚不支持跨浏览器共享。</p><button onclick="copyText($('#boardlink').textContent)">复制链接</button> <button onclick="closeModal()">关闭</button>`)}
-function dataTable(){return `<table class="list"><tr><th>渠道</th><th>净销售额</th><th>上月同期</th><th>同比较变化</th></tr>${[['线上直营','54.0 万','64.1 万','−15.8%'],['经销渠道','38.7 万','39.8 万','−2.8%'],['线下门店','25.6 万','26.7 万','−4.1%'],['其他','10.3 万','10.6 万','−2.8%']].map(a=>'<tr>'+a.map((x,i)=>`<td style="${i===3?'color:#b87b5d':''}">${x}</td>`).join('')+'</tr>').join('')}</table>`}
-const knowledgeTopics = {
-  sales: {
-    name: '销售经营',
-    summary: '了解实际销售收入，以及各渠道的销售表现。',
-    owner: '经营分析组',
-    questions: ['本月净销售额是多少？', '各渠道的净销售额分别是多少？'],
-    boundary: '覆盖已支付订单和成功退款，排除测试订单。财务确认收入另有口径。',
-    metric: '净销售额',
-    source: '经营数据库 · PostgreSQL'
-  },
-  inventory: {
-    name: '双仓库存',
-    summary: '了解各仓库的库存与缺货情况。',
-    owner: '仓储运营组',
-    questions: ['哪些仓库缺货最多？', '某仓库的可用库存是多少？'],
-    boundary: '库存是查询时点的快照。跨日期累加库存会重复计数。',
-    metric: '可用库存',
-    definition: 'WMS 快照中可用于履约的库存件数。临期统计使用未来 3 天到期的可用件数。',
-    mapping: 'WMS 以仓库、SKU、批次和快照时间识别记录。缺货 SKU 数在仓库内去重。',
-    source: '库存服务 · 参数化 API'
-  },
-  processing: {
-    name: '加工损耗',
-    summary: '核对双仓加工完工记录，追踪报损和入库差异。',
-    owner: '仓储运营组',
-    questions: ['今天哪些批次报损超过复核线？', 'ERP 合格产出与 WMS 入库差了多少？'],
-    boundary: '只统计已完工批次。入库差额单列，整体损耗率用报损重量合计除以投料重量合计。',
-    metric: '加工损耗率',
-    definition: '已完工批次的报损重量 ÷ 投料重量。示例复核线为 6%，投料为零时显示待核对。',
-    source: 'ERP 加工单 · WMS 入库单',
-    mapping: '按仓库与加工批次匹配，先分别聚合 ERP 和 WMS 明细。入库状态与数据更新时间用于解释差额。'
-  },
-  live: {
-    name: '直播经营',
-    summary: '按直播场次复盘支付成交及后续退款。',
-    owner: '直播运营组',
-    questions: ['哪场直播退款金额最高？', '哪些订单无法匹配直播场次？'],
-    boundary: '只统计平台记录可匹配场次的订单。记录退款截至时间。投放、佣金和履约成本补齐后再分析利润。',
-    metric: '退款后成交额',
-    definition: '归因到该直播场次的已支付金额，扣除截至统计时点该批订单的成功退款。',
-    source: '直播平台接口 · 商城退款记录',
-    mapping: '用平台与平台订单号连接退款。订单归因按平台提供的场次标识，无法匹配的单独计数。'
-  }
-};
-
-const refundRules = {
-  payment: { label: '按原订单支付日期归属', description: '扣除所选周期内支付的订单产生的所有成功退款，包括期后退款。' },
-  refund: { label: '按退款成功日期归属', description: '扣除所选周期内发生的所有成功退款，包括更早支付订单的退款。' }
-};
-
-const netSalesHistory = [{ version: 1, rule: 'payment', reason: '建立销售经营的初始口径', author: '经营分析组', date: '2026-11-25' }];
-const latestNetSales = () => netSalesHistory.at(-1);
-const topicTabs = ['概览', '指标口径', '业务规则', '常见问题', '数据映射', '变更记录'];
 let knowledgeTopic = null;
-let knowledgeTab = '概览';
-let displayedVersion = null;
-let salesDraft = null;
-let knowledgeFeedback = [];
+let knowledgeVersion = null;
+let knowledgeReturnBoard = null;
 
-function openKnowledge(topic = null, tab = '概览', version = null) {
+function knowledgeVersions(topic) {
+  const documents = typeof knowledgeDocuments === 'undefined' ? {} : knowledgeDocuments;
+  return documents[topic] || {};
+}
+
+function newestKnowledgeVersion(versions) {
+  return Object.keys(versions).sort((a, b) => Number(b.slice(1)) - Number(a.slice(1)))[0];
+}
+
+function currentKnowledge() {
+  const versions = knowledgeVersions(knowledgeTopic);
+  return versions[knowledgeVersion || newestKnowledgeVersion(versions)];
+}
+
+function openKnowledge(topic = null, version = null) {
+  if (page === 1) knowledgeReturnBoard = activeId;
+  if (!topic) knowledgeReturnBoard = null;
   knowledgeTopic = topic;
-  knowledgeTab = tab;
-  displayedVersion = version;
+  knowledgeVersion = version;
   go(2);
 }
 
 function knowledge() {
   if (!knowledgeTopic) {
-    return `<h1>业务知识</h1><p class="muted">按业务主题查阅指标口径、分析规则和数据来源。</p>
-      <div class="grid section">${Object.entries(knowledgeTopics).map(([id, topic]) => `
-        <article class="card knowledge-topic">
-          <span class="muted">${topic.owner}</span><h2>${topic.name}</h2><p>${topic.summary}</p>
-          <p class="muted">例如「${topic.questions[0]}」</p>
-          <button onclick="openKnowledge('${id}')">查看主题 →</button>
-        </article>`).join('')}</div>`;
+    const documents = typeof knowledgeDocuments === 'undefined' ? {} : knowledgeDocuments;
+    const topics = Object.entries(documents);
+    return `<h1>业务知识</h1><p class="muted">查阅已部署的指标口径、使用规则和数据来源。</p>
+      <div class="grid section">${topics.length ? topics.map(([topic, versions]) => {
+        const version = newestKnowledgeVersion(versions);
+        const doc = versions[version];
+        return `<article class="card knowledge-topic"><span class="tag">${version}</span>
+          <h2>${esc(doc.title)}</h2><p>${esc(doc.summary)}</p>
+          <button onclick="openKnowledge('${topic}')">阅读文档 →</button></article>`;
+      }).join('') : '<p>暂未加载业务知识，请检查部署的知识文件。</p>'}</div>`;
   }
 
-  const topic = knowledgeTopics[knowledgeTopic];
-  const sales = knowledgeTopic === 'sales';
-  const latest = latestNetSales();
-  const selected = netSalesHistory.find(item => item.version === displayedVersion) || latest;
-
-  return `<button onclick="openKnowledge()">← 业务主题</button>
-    <div class="row section knowledge-heading"><div><h1>${topic.name}</h1><p>${topic.summary}</p><p class="muted">负责人 · ${topic.owner}</p></div>
-    ${sales && salesDraft ? '<button onclick="openKnowledge(\'sales\',\'指标口径\')">继续编辑草稿</button>' : ''}</div>
-    <div class="tabs knowledge-tabs" aria-label="主题页面">${topicTabs.map(tab => `<button aria-pressed="${tab === knowledgeTab}" class="${tab === knowledgeTab ? 'on' : ''}" onclick="openKnowledge('${knowledgeTopic}','${tab}')">${tab}</button>`).join('')}</div>
-    ${knowledgeContent(topic, sales, latest, selected)}`;
-}
-
-function knowledgeContent(topic, sales, latest, selected) {
-  switch (knowledgeTab) {
-    case '概览':
-      return `<div class="chartgrid"><section class="card"><h2>可以回答的问题</h2><ul>${topic.questions.map(question => `<li>${question}</li>`).join('')}</ul><h3>数据范围</h3><p>${topic.boundary}</p></section>
-        <section class="card"><h2>关键指标</h2><p>${topic.metric}</p><button onclick="openKnowledge('${knowledgeTopic}','指标口径')">查看口径 →</button></section></div>`;
-    case '指标口径':
-      return sales ? netSalesDefinition(latest, selected) : `<section class="card"><h2>${topic.metric}</h2><p>${topic.definition}</p><p>${topic.boundary}</p></section>`;
-    case '业务规则':
-      return `<section class="card"><h2>适用范围</h2><p>${topic.boundary}</p>${sales ? `<h3>退款归属 · v${latest.version}</h3><p>${refundRules[latest.rule].description}</p><button onclick="openKnowledge('sales','指标口径')">查看指标定义</button>` : ''}</section>`;
-    case '常见问题':
-      return `<section class="card"><h2>问题与查数示例</h2>${topic.questions.map(question => `<p><strong>${question}</strong></p>`).join('')}
-        ${sales ? `<p>使用净销售额 v${latest.version}。先确定支付日期范围，再根据退款归属规则扣减。渠道拆分按订单所属渠道统计。</p>${sampleDetails()}` : `<p>${topic.definition}</p>`}</section>`;
-    case '数据映射':
-      return `<section class="card"><h2>${topic.source}</h2>${sales ? `<dl class="knowledge-facts"><dt>订单</dt><dd><code>orders.id</code>（订单编号）、<code>paid_at</code>（支付时间）、<code>paid_amount</code>（支付金额）、<code>is_test</code>（测试订单）</dd><dt>退款</dt><dd><code>refunds.order_id</code> 关联订单，退款表一行代表一笔退款。</dd><dt>计算</dt><dd>分别汇总支付与退款金额，再计算差值。订单金额不随退款笔数重复计入。</dd></dl>` : `<p>${topic.mapping}</p><p>${topic.boundary}</p>`}</section>`;
-    case '变更记录':
-      return sales ? `<section class="card"><h2>净销售额发布记录</h2>${[...netSalesHistory].reverse().map(entry => `
-        <article class="knowledge-history"><div class="row"><div><strong>v${entry.version} · ${refundRules[entry.rule].label}</strong><p class="muted">${entry.date} · ${entry.author}</p></div><button onclick="openKnowledge('sales','指标口径',${entry.version})">查看版本</button></div>
-        <p>${esc(entry.reason)}</p>${entry.validation ? `<p class="muted">样例验证通过 · ${entry.validation.total.toLocaleString('zh-CN')} 元</p>` : ''}</article>`).join('')}</section>` : '<section class="card"><p>暂无口径变更记录。</p></section>';
+  const versions = knowledgeVersions(knowledgeTopic);
+  const selectedVersion = knowledgeVersion || newestKnowledgeVersion(versions);
+  const doc = currentKnowledge();
+  const navigation = `<div class="knowledge-actions"><button onclick="openKnowledge()">← 业务知识</button>
+    ${knowledgeReturnBoard ? '<button onclick="openBoard(knowledgeReturnBoard)">返回看板</button>' : ''}</div>`;
+  if (!doc) {
+    return `${navigation}<section class="card section"><h1>口径版本暂不可用</h1>
+      <p>未找到 ${esc(knowledgeTopic)} ${esc(selectedVersion || '')}。请核对看板引用和部署版本。</p></section>`;
   }
+  const availableVersions = Object.keys(versions).sort((a, b) => Number(b.slice(1)) - Number(a.slice(1)));
+  return `${navigation}<article class="card knowledge-document section">
+    <div class="row knowledge-heading"><h1>${esc(doc.title)}</h1>
+      ${availableVersions.length > 1
+        ? `<label>文档版本 <select aria-label="文档版本" onchange="openKnowledge('${knowledgeTopic}',this.value)">
+          ${availableVersions.map(version => `<option ${version === selectedVersion ? 'selected' : ''}>${version}</option>`).join('')}
+        </select></label>`
+        : `<span class="tag">${selectedVersion}</span>`}</div>
+    ${doc.html}
+    <p class="knowledge-source"><a href="../${esc(doc.source)}">查看 Markdown 源文件</a></p>
+  </article>`;
 }
-
-function netSalesDefinition(latest, selected) {
-  const isLatest = latest.version === selected.version;
-  return `<section class="card"><div class="row knowledge-heading"><div><h2>净销售额 <span class="tag">v${selected.version} · ${isLatest ? '已发布' : '历史版本'}</span></h2><p>支付金额扣除成功退款后的金额。</p></div>
-    ${isLatest ? '<button class="primary" onclick="editNetSales()">编辑口径</button>' : '<button onclick="openKnowledge(\'sales\',\'指标口径\')">查看最新版本</button>'}</div>
-    <dl class="knowledge-facts"><dt>退款归属</dt><dd><strong>${refundRules[selected.rule].label}</strong><br>${refundRules[selected.rule].description}</dd>
-    <dt>统计时间</dt><dd>支付金额按支付时间统计，使用北京时间。</dd><dt>单位及维度</dt><dd>人民币元。可按日期、渠道查看。</dd><dt>排除</dt><dd>测试订单及其退款、未支付订单、未成功的退款。</dd></dl>
-    <details><summary>技术映射</summary><p>支付使用 <code>orders.paid_at</code> 和 <code>orders.paid_amount</code>。退款金额来自 <code>refunds.amount</code>，归属日期为 <code>${selected.rule === 'payment' ? 'orders.paid_at' : 'refunds.refunded_at'}</code>。</p></details>
-    <div class="knowledge-actions"><button onclick="feedbackDialog(${selected.version})">报告口径问题</button><button onclick="openKnowledge('sales','变更记录')">查看发布记录</button></div></section>
-    ${isLatest && salesDraft ? netSalesEditor(latest) : ''}
-    ${knowledgeFeedback.length ? `<section class="card section"><h2>收到的口径反馈</h2>${knowledgeFeedback.map(item => `<p><span class="tag">v${item.version}</span> ${esc(item.message)}</p>`).join('')}</section>` : ''}`;
-}
-
-function feedbackDialog(version) {
-  modal(`<h2>报告净销售额口径问题</h2><p class="muted">关联版本 v${version} · 演示反馈</p><form onsubmit="submitKnowledgeFeedback(event,${version})"><label class="field">问题描述<textarea id="feedback-message" required rows="4" placeholder="例如：退款应该计入实际发生的月份。"></textarea></label><button type="button" onclick="closeModal()">取消</button> <button class="primary">提交反馈</button></form>`);
-}
-
-function submitKnowledgeFeedback(event, version) {
-  event.preventDefault();
-  const message = $('#feedback-message').value.trim();
-  if (!message) return;
-  knowledgeFeedback.push({ version, message });
-  closeModal();
-  render();
-}
-
-function editNetSales() {
-  if (!salesDraft) salesDraft = { rule: latestNetSales().rule, reason: '', validation: null };
-  render();
-  $('#net-sales-editor').scrollIntoView({ block: 'start' });
-  $('#refund-rule').focus({ preventScroll: true });
-}
-
-// The sample deliberately includes a refund from an earlier order and a refund after the period.
-const salesSample = {
-  payments: [
-    { id: 'A', date: '11-05', amount: 1000 },
-    { id: 'B', date: '10-25', amount: 800 },
-    { id: 'C', date: '11-25', amount: 600 }
-  ],
-  refunds: [
-    { id: 'A', date: '11-20', amount: 120 },
-    { id: 'B', date: '11-02', amount: 80 },
-    { id: 'C', date: '11-26', amount: 50 }
-  ]
-};
-const salesSampleExpected = { payment: 1430, refund: 1400 };
-
-function calculateSalesSample(rule) {
-  const inRange = date => date >= '11-01' && date <= '11-25';
-  const payments = salesSample.payments.filter(payment => inRange(payment.date));
-  const refunds = salesSample.refunds.filter(refund => rule === 'payment'
-    ? payments.some(payment => payment.id === refund.id)
-    : inRange(refund.date));
-  const total = payments.reduce((sum, row) => sum + row.amount, 0) - refunds.reduce((sum, row) => sum + row.amount, 0);
-  const expected = salesSampleExpected[rule];
-  return { total, expected, passed: total === expected };
-}
-
-function sampleDetails() {
-  return `<details><summary>查看固定样例 · 11 月 1–25 日</summary>
-    <table class="list"><thead><tr><th>订单</th><th>支付日期 · 金额</th><th>退款日期 · 金额</th></tr></thead>
-    <tbody>${salesSample.payments.map(payment => {
-      const refund = salesSample.refunds.find(row => row.id === payment.id);
-      return `<tr><td>${payment.id}</td><td>${payment.date} · ${payment.amount} 元</td><td>${refund.date} · ${refund.amount} 元</td></tr>`;
-    }).join('')}</tbody></table></details>`;
-}
-
-function netSalesEditor(latest) {
-  const next = latest.version + 1;
-  const affected = dashboards.filter(board => board.cards.some(id => chartLibrary.some(chart => chart.id === id && chart.metricVersion)));
-  const validation = salesDraft.validation;
-  return `<section class="card section" id="net-sales-editor"><div class="row"><h2>净销售额草稿 <span class="tag">候选 v${next}</span></h2><button onclick="discardNetSales()">放弃草稿</button></div>
-    <div class="chartgrid"><div>
-      <form onsubmit="validateNetSales(event)">
-        <label class="field">退款归属<select id="refund-rule" onchange="updateRefundRule(this.value)">
-          ${Object.entries(refundRules).map(([id, rule]) => `<option value="${id}" ${id === salesDraft.rule ? 'selected' : ''}>${rule.label}</option>`).join('')}
-        </select></label>
-        <label class="field">修改原因<textarea id="change-reason" required rows="3" oninput="salesDraft.reason=this.value" placeholder="例如：退款应与财务月报的发生月份一致。">${esc(salesDraft.reason)}</textarea></label>
-        <button>运行样例验证</button>
-      </form>
-      <p class="muted">验证基于内置样例与预期值。</p>
-      ${sampleDetails()}
-      ${validation ? `<p class="insight" role="status"><strong>${validation.passed ? '样例验证通过' : '样例验证失败'}</strong><br>实际 ${validation.total.toLocaleString('zh-CN')} 元，基准 ${validation.expected.toLocaleString('zh-CN')} 元。</p>` : ''}
-    </div><div class="knowledge-review">
-      <h3>口径差异</h3>
-      <p><span class="muted">正式 v${latest.version}</span><br>${refundRules[latest.rule].label}</p>
-      <p><span class="muted">候选 v${next}</span><br>${refundRules[salesDraft.rule].label}</p>
-      <p class="muted">${latest.rule === salesDraft.rule ? '选择不同的退款归属规则后即可验证。' : refundRules[salesDraft.rule].description}</p>
-      <h3>引用此指标的看板（${affected.length}）</h3>
-      <ul>${affected.map(board => `<li>${esc(board.name)}${board.archived ? '（已归档）' : ''}</li>`).join('')}</ul>
-      <p class="muted">发布后，外部工具默认读取 v${next}。已有图表继续使用绑定版本，迁移时需要单独确认。</p>
-      <button class="primary" onclick="publishNetSales()" ${validation?.passed ? '' : 'disabled'}>发布 v${next}</button>
-    </div></div></section>`;
-}
-
-function updateRefundRule(rule) {
-  salesDraft.rule = rule;
-  salesDraft.validation = null;
-  render();
-  $('#refund-rule').focus({ preventScroll: true });
-}
-
-function validateNetSales(event) {
-  event.preventDefault();
-  if (!salesDraft.reason.trim()) { toast('请填写修改原因'); return; }
-  if (salesDraft.rule === latestNetSales().rule) { toast('请先选择不同的退款归属规则'); return; }
-  salesDraft.validation = calculateSalesSample(salesDraft.rule);
-  render();
-  $('#net-sales-editor').scrollIntoView({ block: 'nearest' });
-}
-
-function publishNetSales() {
-  if (!salesDraft.validation?.passed || !salesDraft.reason.trim()) {
-    toast('请填写修改原因，并通过样例验证');
-    return;
-  }
-  const version = latestNetSales().version + 1;
-  netSalesHistory.push({
-    version,
-    rule: salesDraft.rule,
-    reason: salesDraft.reason.trim(),
-    validation: salesDraft.validation,
-    author: '林晓',
-    date: new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Shanghai' })
-  });
-  salesDraft = null;
-  openKnowledge('sales', '变更记录');
-  toast(`净销售额 v${version} 已发布到演示会话`);
-}
-
-function discardNetSales() {
-  modal('<h2>放弃口径草稿？</h2><p>草稿中的修改及验证结果将清除。</p><button onclick="closeModal()">继续编辑</button> <button onclick="salesDraft=null;closeModal();render()">放弃草稿</button>');
-}
-function sources(){return `<div class="row"><div><span class="eyebrow">CONNECTIONS</span><h1>连接业务中的每一份数据</h1><p class="muted">数据库与业务 API，统一成为可理解、可分析的数据。</p></div><button class="primary" onclick="connect()">＋ 添加数据源</button></div><div class="grid section">${[['PG','ERP 经营数据','PostgreSQL · 演示映射'],['MY','商城与小程序','MySQL · 演示映射'],['API','WMS 与平台接口','API · 演示映射']].map(([i,n,d])=>`<div class="card"><div class="sourceicon">${i}</div><div class="row"><h3>${n}</h3><span class="tag">● 正常</span></div><p class="muted">${d}</p><hr style="border:0;border-top:1px solid var(--line);margin:24px 0"><div class="row"><span class="muted">最近检测 10:30</span><button onclick="connect('${i==='PG'?'PostgreSQL':i==='MY'?'MySQL':'API'}')">配置 →</button></div></div>`).join('')}</div><div class="insight"><b>从连接到可分析，还差一步业务理解</b><br>接入后补充字段说明、指标口径和表关联，为查询与外部分析工具提供一致的业务口径。</div>${sourceReconciliation()}`}
+function sources(){return `<div class="row"><div><h1>数据接入</h1><p class="muted">管理数据库和业务 API 连接。</p></div><button class="primary" onclick="connect()">＋ 添加数据源</button></div><div class="grid section">${[['PG','ERP 经营数据','PostgreSQL · 演示映射'],['MY','商城与小程序','MySQL · 演示映射'],['API','WMS 与平台接口','API · 演示映射']].map(([i,n,d])=>`<div class="card"><div class="sourceicon">${i}</div><div class="row"><h3>${n}</h3><span class="tag">● 正常</span></div><p class="muted">${d}</p><hr style="border:0;border-top:1px solid var(--line);margin:24px 0"><div class="row"><span class="muted">最近检测 10:30</span><button onclick="connect('${i==='PG'?'PostgreSQL':i==='MY'?'MySQL':'API'}')">配置 →</button></div></div>`).join('')}</div><div class="insight"><b>从连接到可分析，还差一步业务理解</b><br>接入后补充字段说明、指标口径和表关联，为查询与外部分析工具提供一致的业务口径。</div>${sourceReconciliation()}`}
 function modal(s){$('#modal').innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">${s}</div></div>`}function closeModal(){$('#modal').innerHTML=''}
 function connect(type='PostgreSQL'){modal(`<div class="row"><h2>配置数据源</h2><button onclick="closeModal()">×</button></div><label class="field">连接类型<select id="ctype" onchange="connect(this.value)">${['PostgreSQL','MySQL','API'].map(t=>`<option ${type===t?'selected':''}>${t}</option>`).join('')}</select></label><label class="field">显示名称<input placeholder="例如：经营数据库"></label>${type==='API'?`<label class="field">API 模式<select><option>参数化查询 API</option><option>明细数据集 API</option></select></label><label class="field">接口 URL<input placeholder="https://internal.example/api/inventory"></label><label class="field">鉴权方式<select><option>Bearer Token</option><option>自定义 Header</option></select></label><label class="field">返回数据路径<input placeholder="data.items"></label><p class="muted">后续配置参数、字段含义、聚合限制和刷新策略。</p>`:`<label class="field">主机<input placeholder="db.internal.example"></label><div class="row"><label class="field">端口<input value="${type==='MySQL'?'3306':'5432'}"></label><label class="field">数据库<input placeholder="business"></label></div><label class="field">只读账号<input placeholder="analytics_reader"></label><label class="field">密码<input type="password" placeholder="输入连接密码"></label>`}<div class="row"><button onclick="$('#testresult').textContent='✓ 演示连接测试通过；未访问真实服务'">测试连接</button><button class="primary" onclick="closeModal();toast('接入配置已完成演示；未建立真实连接')">保存配置</button></div><p id="testresult" class="up"></p>`)}
 let keys=[];
-function integration(){return `<div class="row"><div><span class="eyebrow">EXTERNAL INTEGRATIONS</span><h1>MCP / Skill 接入</h1><p class="muted">在外部 AI 工具中分析数据，结果保存到 DataCube 的图表和看板。</p></div><button class="primary" onclick="keyDialog()">＋ 创建 API Key</button></div><div class="chartgrid section"><div class="card"><span class="tag">MCP</span><h2>连接外部 AI 客户端</h2><p>服务地址</p><pre>https://datacube.example.internal/mcp</pre><p class="muted">示例地址 · 将地址与 API Key 配置到支持 MCP 的客户端。</p><h3 class="section">可授权的能力</h3><p style="line-height:2">读取已发布的业务知识与指标版本 · 执行只读查询<br>创建图表 · 按 ID 更新看板 · 读取执行状态</p><button onclick="configDialog()">查看连接配置</button></div><div class="card"><span class="tag">SKILL</span><h2>通过 Skill 使用</h2><p style="line-height:1.9">Skill 指导外部 Agent 理解平台指标和调用流程，通过 MCP 或平台 API 执行操作。沿用同一 API Key 权限。</p><ol style="line-height:2.2"><li>安装企业提供的 DataCube Skill</li><li>配置平台地址与 API Key</li><li>在外部工具中查数或生成看板</li><li>回到平台查看与管理结果</li></ol><p class="muted">原型仅展示接入流程，尚未交付真实 MCP 服务或 Skill 安装包。</p></div></div><div class="card section"><h3>API Keys</h3><p class="muted">Key 绑定创建者、业务空间及授权范围。完整密钥仅在创建时展示一次。</p><table class="list"><tr><th>名称</th><th>标识</th><th>权限</th><th>到期时间</th><th>状态</th><th></th></tr>${keys.length?keys.map((k,i)=>`<tr><td>${esc(k.name)}</td><td>dc_demo_••••${i+1000}</td><td>${k.write?'查询、创建图表与看板':'只读查询'}</td><td>30 天后</td><td>${k.revoked?'已撤销':'有效'}</td><td><button ${k.revoked?'disabled':''} onclick="keys[${i}].revoked=true;render();toast('演示 Key 已撤销')">撤销</button></td></tr>`).join(''):'<tr><td colspan="6">暂无 API Key，创建后可配置到外部客户端。</td></tr>'}</table></div>`}
+function integration(){return `<div class="row"><div><h1>AI接入</h1><p class="muted">在外部 AI 工具中分析数据，结果保存到 DataCube 的图表和看板。</p></div><button class="primary" onclick="keyDialog()">＋ 创建 API Key</button></div><div class="chartgrid section"><div class="card"><span class="tag">MCP</span><h2>连接外部 AI 客户端</h2><p>服务地址</p><pre>https://datacube.example.internal/mcp</pre><p class="muted">示例地址 · 将地址与 API Key 配置到支持 MCP 的客户端。</p><h3 class="section">可授权的能力</h3><p style="line-height:2">读取已部署的 Markdown 业务知识 · 执行只读查询<br>创建图表 · 按 ID 更新看板 · 读取执行状态</p><button onclick="configDialog()">查看连接配置</button></div><div class="card"><span class="tag">SKILL</span><h2>通过 Skill 使用</h2><p style="line-height:1.9">Skill 指导外部 Agent 理解平台指标和调用流程，通过 MCP 或平台 API 执行操作。沿用同一 API Key 权限。</p><ol style="line-height:2.2"><li>安装企业提供的 DataCube Skill</li><li>配置平台地址与 API Key</li><li>在外部工具中查数或生成看板</li><li>回到平台查看与管理结果</li></ol><p class="muted">原型仅展示接入流程，尚未交付真实 MCP 服务或 Skill 安装包。</p></div></div><div class="card section"><h3>API Keys</h3><p class="muted">Key 绑定创建者、业务空间及授权范围。完整密钥仅在创建时展示一次。</p><table class="list"><tr><th>名称</th><th>标识</th><th>权限</th><th>到期时间</th><th>状态</th><th></th></tr>${keys.length?keys.map((k,i)=>`<tr><td>${esc(k.name)}</td><td>dc_demo_••••${i+1000}</td><td>${k.write?'查询、创建图表与看板':'只读查询'}</td><td>30 天后</td><td>${k.revoked?'已撤销':'有效'}</td><td><button ${k.revoked?'disabled':''} onclick="keys[${i}].revoked=true;render();toast('演示 Key 已撤销')">撤销</button></td></tr>`).join(''):'<tr><td colspan="6">暂无 API Key，创建后可配置到外部客户端。</td></tr>'}</table></div>`}
 function keyDialog(){modal(`<div class="row"><h2>创建 API Key</h2><button onclick="closeModal()">×</button></div><label class="field">名称<input id="keyname" placeholder="例如：个人分析工具"></label><label class="field">业务空间<select><option>经营分析空间</option></select></label><label class="field">授权范围<select id="keyscope"><option value="read">只读查询</option><option value="write">查询 + 创建图表与看板</option></select></label><label class="field">有效期<select><option>30 天</option></select></label><p class="muted">权限不超过创建者已有权限，不能修改业务数据。</p><button class="primary" onclick="createKey()">创建</button>`)}
 function createKey(){let name=$('#keyname').value.trim();if(!name){toast('请填写 Key 名称');return}keys.push({name,write:$('#keyscope').value==='write',revoked:false});render();modal(`<h2>API Key 已创建</h2><p>请复制并保存，关闭后不再展示完整内容。</p><pre id="newkey">dc_demo_not_a_real_secret_${keys.length}</pre><p class="muted">这是不可用于鉴权的演示字符串，请勿输入真实凭据。</p><button onclick="copyText($('#newkey').textContent)">复制演示 Key</button> <button class="primary" onclick="closeModal()">已保存，关闭</button>`)}
 function copyText(t){if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('已复制')).catch(()=>toast('请手动选择文本复制'));else toast('请手动选择文本复制')}
@@ -422,5 +319,5 @@ function configDialog(){modal(`<h2>MCP 客户端连接配置</h2><pre>{
     "Authorization": "Bearer &lt;DATACUBE_API_KEY&gt;"
   }
 }</pre><p class="muted">概念配置，实际字段名由客户端决定；API Key 是平台访问凭据，不是模型供应商密钥。</p><button onclick="closeModal()">关闭</button>`)}
-function render(){$('#nav').innerHTML=names.map((n,i)=>`<button class="${page===i?'active':''}" onclick="${i===2?'openKnowledge()':'go('+i+')'}"><span class="navicon">${icons[i]}</span>${n}</button>`).join('');$('#crumb').textContent=page===1&&current()?'看板 / '+current().name:page===2&&knowledgeTopic?'业务知识 / '+knowledgeTopics[knowledgeTopic].name:names[page];$('#variantlabel').textContent=`原型 ${v} · ${{A:'资产导航优先',B:'经营概览优先',C:'团队资产优先'}[v]}`;$('#app').innerHTML=`<div class="banner">产品交互原型 · 虚拟数据 · 操作仅在当前会话生效</div>`+[home,dashboard,knowledge,sources,integration][page]()}if(dashboards.some(b=>b.id===initialBoard)){activeId=initialBoard;page=1}render();
+function render(){$('#nav').innerHTML=names.map((n,i)=>`<button class="${page===i?'active':''}" aria-current="${page===i?'page':'false'}" onclick="${i===2?'openKnowledge()':'go('+i+')'}"><span class="navicon" aria-hidden="true">${icons[i]}</span>${n}</button>`).join('');$('#crumb').textContent=page===1&&current()?'看板 / '+current().name:page===2&&currentKnowledge()?'业务知识 / '+currentKnowledge().title:names[page];$('#variantlabel').textContent=`原型 ${v} · ${{A:'资产导航优先',B:'经营概览优先',C:'团队资产优先'}[v]}`;$('#app').innerHTML=[home,dashboard,knowledge,sources,integration][page]()}if(dashboards.some(b=>b.id===initialBoard)){activeId=initialBoard;page=1}render();
 </script></body></html>

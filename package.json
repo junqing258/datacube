@@ -1,0 +1,43 @@
+{
+  "name": "datacube-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DataCube - 面向外部 Agent 的企业 BI 平台 - Monorepo",
+  "license": "MIT",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "dev": "npx turbo run dev",
+    "dev:web": "pnpm --filter datacube-web run dev",
+    "dev:server": "pnpm --filter datacube-server run start:dev",
+    "build": "npx turbo run build",
+    "build:web": "pnpm --filter datacube-web run build",
+    "build:server": "pnpm --filter datacube-server run build",
+    "clean": "pnpm -r exec rm -rf dist node_modules .turbo",
+    "clean:modules": "pnpm -r exec rm -rf node_modules",
+    "clean:dist": "pnpm -r exec rm -rf dist",
+    "lint": "pnpm -r --parallel run lint",
+    "lint:fix": "pnpm -r --parallel run lint --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "type-check": "pnpm -r --parallel exec tsc --noEmit",
+    "test": "pnpm -r --parallel run test",
+    "prisma:generate": "pnpm --filter datacube-server run prisma:generate",
+    "prisma:migrate": "pnpm --filter datacube-server run prisma:migrate",
+    "prisma:studio": "pnpm --filter datacube-server run prisma:studio",
+    "prisma:seed": "pnpm --filter datacube-server run prisma:seed",
+    "docker:up": "cd apps/server && docker-compose up -d",
+    "docker:down": "cd apps/server && docker-compose down",
+    "docker:logs": "cd apps/server && docker-compose logs -f"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "prettier": "^3.2.0",
+    "turbo": "^2.5.8",
+    "typescript": "^7.0.2"
+  }
+}
