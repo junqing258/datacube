@@ -1,61 +1,14 @@
+import { readChartData } from '../services/chartData';
 import { chartInput, validateChartPoints, type CustomChart } from './customCharts';
 import { executeExtract, executeScript } from './chartScriptSandbox';
-
-export const scriptDatasets = {
-  daily_orders: {
-    name: 'ERP · 每日归因订单',
-    connection: 'ERP',
-    fields: ['day', 'attributed_amount'],
-    rows: [
-      { day: '2026-11-23', attributed_amount: 1200 },
-      { day: '2026-11-24', attributed_amount: 1560 },
-      { day: '2026-11-25', attributed_amount: 1420 },
-    ],
-  },
-  daily_refunds: {
-    name: 'ERP · 每日退款',
-    connection: 'ERP',
-    fields: ['day', 'refund_amount'],
-    rows: [
-      { day: '2026-11-23', refund_amount: 100 },
-      { day: '2026-11-25', refund_amount: 80 },
-    ],
-  },
-  daily_shop_orders: {
-    name: '商城 · 每日成交',
-    connection: '商城',
-    fields: ['day', 'paid_amount'],
-    rows: [
-      { day: '2026-11-23', paid_amount: 720 },
-      { day: '2026-11-25', paid_amount: 950 },
-    ],
-  },
-  daily_ads: {
-    connection: null,
-    name: '平台 API · 每日广告花费',
-    fields: ['day', 'cost'],
-    rows: [
-      { day: '2026-11-23', cost: 300 },
-      { day: '2026-11-25', cost: 400 },
-      { day: '2026-11-26', cost: 0 },
-    ],
-  },
-};
 
 export type Cell = string | number | boolean | null;
 export type ScriptRow = Record<string, Cell>;
 export type Window = { startDay: string; endDay: string };
-export type DatasetId = keyof typeof scriptDatasets;
-function connectionTables(dataset: DatasetId) {
-  const { connection } = scriptDatasets[dataset];
-  return connection
-    ? Object.entries(scriptDatasets).filter(([, table]) => table.connection === connection)
-    : [];
-}
 
 export type ScriptBinding = {
   alias: string;
-  dataset: DatasetId;
+  dataset: string;
   mode: 'dataset' | 'sql';
   fields: string[];
   query: string;
@@ -142,7 +95,7 @@ export function readBinding(value: unknown): ScriptBinding {
   if (
     typeof alias !== 'string' ||
     typeof dataset !== 'string' ||
-    !Object.hasOwn(scriptDatasets, dataset) ||
+    !sqlIdentifier.test(dataset) ||
     (mode !== 'dataset' && mode !== 'sql') ||
     !Array.isArray(fields) ||
     fields.some((field) => typeof field !== 'string') ||
@@ -155,7 +108,7 @@ export function readBinding(value: unknown): ScriptBinding {
   }
   return {
     alias,
-    dataset: dataset as DatasetId,
+    dataset,
     mode,
     fields,
     query,
@@ -163,50 +116,6 @@ export function readBinding(value: unknown): ScriptBinding {
     startParameter,
     endParameter,
   };
-}
-
-function readSql(
-  binding: ScriptBinding,
-  range: Window,
-  queryParams: Record<string, string | number>,
-  signal?: AbortSignal,
-) {
-  const tables = connectionTables(binding.dataset).map(([name, { fields, rows }]) => ({
-    name,
-    fields,
-    rows,
-  }));
-  if (!tables.length) throw new Error('请选择已登记的数据库数据集。');
-  signal?.throwIfAborted();
-  return new Promise<ScriptRow[]>((resolve, reject) => {
-    const worker = new Worker(new URL('./chartScriptSql.worker.ts', import.meta.url), {
-      type: 'module',
-    });
-    function finish() {
-      clearTimeout(timeout);
-      signal?.removeEventListener('abort', abort);
-      worker.terminate();
-    }
-    function abort() {
-      finish();
-      reject(signal?.reason);
-    }
-    const timeout = window.setTimeout(() => {
-      finish();
-      reject(new Error('SQL 查询超时，请缩小日期范围。'));
-    }, 5000);
-    signal?.addEventListener('abort', abort, { once: true });
-    worker.onmessage = ({ data }) => {
-      finish();
-      if ('error' in data) reject(new Error(data.error));
-      else resolve(data.rows);
-    };
-    worker.onerror = () => {
-      finish();
-      reject(new Error('演示数据库加载失败。'));
-    };
-    worker.postMessage({ binding, range, tables, queryParams });
-  });
 }
 
 function isCell(value: unknown): value is Cell {
@@ -218,11 +127,11 @@ function isCell(value: unknown): value is Cell {
   );
 }
 
-type Filter = { field: string; values: unknown[] };
+type Filter = { field: string; values: Exclude<Cell, null>[] };
 
 function readOptions(binding: ScriptBinding, options: unknown) {
   const filters: Filter[] = [];
-  const queryParams: Record<string, string | number> = Object.create(null);
+  const queryParams: Record<string, Exclude<Cell, null>> = Object.create(null);
   if (options !== undefined && !isRecord(options)) throw new Error('read 参数须为对象。');
   const settings = options ?? {};
   const allowed = binding.mode === 'sql' ? 'params' : 'filters';
@@ -238,11 +147,10 @@ function readOptions(binding: ScriptBinding, options: unknown) {
     for (const [name, type] of declarations) {
       const value = Object.hasOwn(values, name) ? values[name] : undefined;
       if (!matchesFieldType(type, value)) throw new Error(`SQL 参数 ${name} 须为 ${type}。`);
-      queryParams[`:${name}`] = typeof value === 'boolean' ? Number(value) : value;
+      queryParams[name] = value;
     }
   } else if (settings.filters !== undefined) {
     if (!Array.isArray(settings.filters)) throw new Error('filters 须为数组。');
-    const sourceRows: readonly ScriptRow[] = scriptDatasets[binding.dataset].rows;
     for (const filter of settings.filters) {
       if (
         !isRecord(filter) ||
@@ -259,13 +167,7 @@ function readOptions(binding: ScriptBinding, options: unknown) {
         !Array.isArray(values) ||
         !values.length ||
         values.length > 100 ||
-        values.some(
-          (item) =>
-            item === null ||
-            !isCell(item) ||
-            typeof item !== typeof sourceRows[0]?.[field] ||
-            (field === 'day' && !validDay(item)),
-        )
+        !values.every((item): item is Exclude<Cell, null> => isCell(item) && item !== null)
       ) {
         throw new Error(`筛选 ${field} 须提供符合类型的 eq 值或 1 至 100 个 in 值。`);
       }
@@ -282,25 +184,23 @@ async function readRows(
   signal?: AbortSignal,
 ) {
   const { filters, queryParams } = readOptions(binding, options);
-  const rows: readonly ScriptRow[] =
-    binding.mode === 'sql'
-      ? await readSql(binding, range, queryParams, signal)
-      : scriptDatasets[binding.dataset].rows.filter(
-          (row: ScriptRow) =>
-            (!binding.useWindow ||
-              (String(row.day) >= range.startDay && String(row.day) < range.endDay)) &&
-            filters.every(({ field, values }) => values.includes(row[field])),
-        );
-  if (rows.length > 10000) throw new Error('输入超过 10,000 行，请缩小日期范围。');
-  return rows.map((row) =>
-    Object.fromEntries(
-      binding.fields.map((field) => {
-        if (!Object.hasOwn(row, field) || !isCell(row[field]))
-          throw new Error(`缺少有效字段 ${field}。`);
-        return [field, row[field]];
-      }),
-    ),
+  const { dataset, fields, mode } = binding;
+  if (mode === 'sql') {
+    if (binding.useWindow) {
+      queryParams[binding.startParameter] = range.startDay;
+      queryParams[binding.endParameter] = range.endDay;
+    }
+    const { rows } = await readChartData(
+      { dataset, fields, mode, query: binding.query, params: queryParams },
+      signal,
+    );
+    return rows;
+  }
+  const { rows } = await readChartData(
+    { dataset, fields, mode, filters, window: binding.useWindow ? range : undefined },
+    signal,
   );
+  return rows;
 }
 
 async function runExtract(
@@ -418,10 +318,10 @@ async function runScriptDraft(
   signal: AbortSignal,
   onInput?: (alias: string, status: string) => void,
 ) {
-  let config: { bindings: ScriptBinding[]; mapping: EtlConfig['mapping'] };
+  let config: { mapping: EtlConfig['mapping'] };
   let inputs: Record<string, ScriptRow[]>;
   if (draft.etl) {
-    config = { bindings: draft.etl.config.extract.bindings, mapping: draft.etl.config.mapping };
+    config = draft.etl.config;
     inputs = await runExtract(draft.etl, params, signal, onInput);
   } else {
     const legacy = await readLegacyInputs(draft, params, signal, onInput);
@@ -485,16 +385,7 @@ async function runScriptDraft(
   });
   const error = points.length && validateChartPoints(kind, points);
   if (error) throw new Error(error);
-  if (draft.etl) return { points, rows, coverage: undefined };
-  const watermarks = config.bindings.map(({ dataset, mode, useWindow }) =>
-    mode === 'dataset'
-      ? scriptDatasets[dataset].rows
-          .filter(({ day }) => !useWindow || (day >= params.startDay && day < params.endDay))
-          .at(-1)?.day
-      : undefined,
-  );
-  const coverage = watermarks.every((day) => day !== undefined) ? watermarks.sort()[0] : undefined;
-  return { points, rows, coverage };
+  return { points, rows };
 }
 
 async function readLegacyInputs(
@@ -553,5 +444,5 @@ async function readLegacyInputs(
       return read.value;
     }),
   );
-  return { config: { bindings, mapping: config.mapping as Mapping }, inputs };
+  return { config: { mapping: config.mapping as Mapping }, inputs };
 }

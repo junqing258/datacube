@@ -6,7 +6,6 @@ import {
   isRecord,
   mappingColumns,
   readBinding,
-  scriptDatasets,
   sqlIdentifier,
   validDay,
   type EtlConfig,
@@ -23,7 +22,7 @@ type JsDefinition = ChartMetadata &
     source: 'js';
     refresh: Refresh;
   };
-type ChartDefinition = JsDefinition | (ChartMetadata & { source: 'sql' });
+type ChartDefinition = JsDefinition | (ChartMetadata & { source: 'sql'; dataSource: string });
 const fieldTypes = new Set<unknown>(['string', 'number', 'boolean', 'date']);
 
 function readObject(value: unknown, path: string, allowed: string[]) {
@@ -83,13 +82,9 @@ function readExtract(value: unknown): EtlConfig['extract'] {
         `${path}.filterFields`,
         true,
       );
-      const available: readonly string[] = scriptDatasets[binding.dataset].fields;
-      if ([...binding.fields, ...filterFields].some((field) => !available.includes(field))) {
-        throw new Error(`${path} 包含未登记的数据集字段。`);
-      }
       return { ...binding, filterFields };
     }
-    if (!binding.query.trim() || !scriptDatasets[binding.dataset].connection) {
+    if (!binding.query.trim()) {
       throw new Error(`${path} 须指定数据库数据集及 SQL 查询。`);
     }
     if (binding.useWindow) {
@@ -233,9 +228,15 @@ export function parseChartDefinition(code: string): ChartDefinition {
   const metadata: ChartMetadata = {
     name: name.trim(),
     kind: kind as ChartMetadata['kind'],
-    dataset: dataset?.trim() || (source === 'js' ? 'JS 脚本 · 派生数据集' : 'SQL · ERP 经营数据'),
+    dataset: dataset?.trim() || (source === 'js' ? 'JS 脚本 · 派生数据集' : 'SQL'),
   };
-  if (source === 'sql') return { ...metadata, source };
+  if (source === 'sql') {
+    const { dataSource } = value;
+    if (typeof dataSource !== 'string' || !sqlIdentifier.test(dataSource)) {
+      throw new Error('dataSource 须为已登记的数据源标识。');
+    }
+    return { ...metadata, source, dataSource };
+  }
   rejectDuplicateKeys(code, 'definition.json');
 
   readObject(value, 'definition.json', [

@@ -52,7 +52,7 @@ export function BoardChart({
 
   const knowledge =
     'topic' in chart
-      ? `/knowledge/${chart.topic}/${chart.knowledgeVersion}?${new URLSearchParams(boardId ? { board: boardId } : {})}`
+      ? `/knowledge/${chart.topic}/${chart.knowledgeVersion}?${new URLSearchParams({ view: 'metrics', ...(boardId ? { board: boardId } : {}) })}`
       : undefined;
 
   return (

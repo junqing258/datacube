@@ -7,6 +7,9 @@ services:
     environment:
       JWT_SECRET: ${JWT_SECRET:?请配置 JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      CHART_DATA_TOKEN: ${CHART_DATA_TOKEN:-}
+      CHART_DATA_CONNECTIONS: ${CHART_DATA_CONNECTIONS:-}
+      CHART_DATA_SOURCES: ${CHART_DATA_SOURCES:-}
     volumes:
       - data:/data
     healthcheck:

@@ -9,8 +9,9 @@ import {
   parseExtractScript,
   validateTransform,
 } from '../data/chartDefinition';
-import { runChartScript, scriptDatasets } from '../data/chartScript';
+import { runChartScript } from '../data/chartScript';
 import { chartInput, validateChartPoints, type CustomChart } from '../data/customCharts';
+import { listChartDataSources, type ChartDataSource } from '../services/chartData';
 
 const CodeEditor = lazy(() => import('../components/CodeEditor'));
 const fileTabClass =
@@ -67,6 +68,7 @@ function ChartEditor({
   const [files, setFiles] = useState(() => initialChartFiles(editingChart));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [sources, setSources] = useState<ChartDataSource[]>([]);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<{
     chart: CustomChart;
@@ -76,6 +78,13 @@ function ChartEditor({
   const submitted = useRef(false);
 
   useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => {
+    const controller = new AbortController();
+    listChartDataSources(undefined, controller.signal)
+      .then(setSources)
+      .catch(() => {});
+    return () => controller.abort();
+  }, []);
 
   const invalidate = useCallback(() => {
     request.current?.abort();
@@ -171,7 +180,7 @@ function ChartEditor({
         };
       } else {
         const code = files.scripts.sql;
-        const points = await previewSql(code);
+        const points = await previewSql(definition.dataSource, code, active.signal);
         const validationError = validateChartPoints(kind, points);
         if (validationError) throw new Error(validationError);
         chart.points = points;
@@ -237,7 +246,8 @@ function ChartEditor({
         >
           <p className="text-sm text-muted">
             <code>source</code> 选择 <code>js</code> 或 <code>sql</code>。使用 JS 时，在{' '}
-            <code>load</code> 中声明输出字段和行键，用 <code>mapping</code> 映射图表字段。
+            <code>load</code> 中声明输出字段和行键，用 <code>mapping</code> 映射图表字段。 使用 SQL
+            时，在 <code>dataSource</code> 中填写数据源标识。
           </p>
           <Suspense fallback={<p role="status">正在加载编辑器…</p>}>
             <CodeEditor
@@ -260,13 +270,18 @@ function ChartEditor({
                   <code>extract({'{ read, params }'})</code> 异步读取并返回数据。
                 </p>
                 <details className="shrink-0 text-sm text-muted lg:max-w-[45%]">
-                  <summary className="cursor-pointer">可用演示数据集</summary>
+                  <summary className="cursor-pointer">已登记数据源</summary>
                   <ul className="mt-2 grid gap-1">
-                    {Object.entries(scriptDatasets).map(([id, dataset]) => (
+                    {sources.map(({ id, name, fields }) => (
                       <li key={id}>
-                        <code>{id}</code> · {dataset.name} · {dataset.fields.join('、')}
+                        <code>{id}</code> · {name} · {fields.join('、')}
                       </li>
                     ))}
+                    <li>
+                      <Link to="/data-sources" className="dc-btn-text">
+                        查看数据接入
+                      </Link>
+                    </li>
                   </ul>
                 </details>
               </div>
@@ -300,8 +315,11 @@ function ChartEditor({
         ) : (
           <Tabs.Content value="sql" className="grid min-w-0 gap-2 data-[state=inactive]:hidden">
             <p className="text-sm text-muted">
-              查询演示表 <code>daily_orders</code>（<code>day</code>、<code>order_count</code>），
-              返回 <code>label</code> 和 <code>value</code>。散点图或地图还需要 {columns}。
+              执行一条只读查询，返回 <code>label</code> 和 <code>value</code>。 散点图或地图还需要{' '}
+              {columns}。{' '}
+              <Link to="/data-sources" className="dc-btn-text">
+                查看数据源
+              </Link>
             </p>
             <Suspense fallback={<p role="status">正在加载编辑器…</p>}>
               <CodeEditor

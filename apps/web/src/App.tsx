@@ -103,7 +103,7 @@ export function App() {
           ...script,
           status: 'success',
           lastSuccess: now,
-          coverage: result.coverage,
+          coverage: undefined,
           error: undefined,
           nextRefresh: nextRefresh(now),
         },

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ChartDataController } from './modules/chart-data/chart-data.controller';
+import { ChartDataService } from './modules/chart-data/chart-data.service';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -13,5 +15,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     HealthModule,
   ],
+  controllers: [ChartDataController],
+  providers: [ChartDataService],
 })
 export class AppModule {}

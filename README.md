@@ -46,6 +46,14 @@ pnpm dev:server              # API 默认端口 3001，Swagger 文档 /api/docs
 
 Vite 的 `/api` 代理与 Nest 使用相同的 `PORT` 优先级：进程环境变量、`apps/server/.env.local`、`apps/server/.env`，默认 `3001`。修改端口后重启前后端开发服务。
 
+## 图表查询真实数据
+
+本地调试使用 Node.js 22.16+ 和已有的 SQLite 业务数据库。将 `apps/server/.env.example` 中的图表数据配置复制到 `apps/server/.env.local`，填入 SQLite 文件的绝对 `file:///` URL、实际表或视图和字段，并为 `CHART_DATA_TOKEN` 生成随机值。启动服务后，在「数据接入」验证该令牌并查看已登记的数据源。
+
+- `query.sql` 在 `definition.json` 的 `dataSource` 填写数据源标识，查询返回 `label` 和 `value` 两列。
+- `extract.js` 在 `extractConfig.bindings` 的 `dataset` 填写数据源标识。`mode: 'dataset'` 读取已登记的字段，`mode: 'sql'` 执行参数化查询。JS 日期参数用 `:startDay` 和 `:endDay`。
+- PostgreSQL 和 MySQL 使用只读连接字符串。SQL 的访问范围由业务数据库账号的授权限定，SQLite 则以只读方式访问配置的文件。为图表使用专门授权的视图、账号或文件。
+
 ## SSH 一键部署
 
 本地需要 Docker Engine、Buildx、Docker Compose 和 SSH。目标 Linux 主机需要 Bash、Docker、支持 `up --wait` 的 Compose，以及 `gzip`、`tar` 和 `flock`。SSH 用户须能写入部署目录并运行 Docker。
