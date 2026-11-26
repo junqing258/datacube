@@ -16,13 +16,15 @@ export function BoardChart({
   boardId,
   warehouse,
   onRemove,
+  onRefreshScript,
   presenting = false,
 }: {
   id: string;
   customChart?: CustomChart;
-  boardId: string;
-  warehouse: string;
+  boardId?: string;
+  warehouse?: string;
   onRemove?: () => void;
+  onRefreshScript?: (chart: CustomChart) => void;
   presenting?: boolean;
 }) {
   const [batch, setBatch] = useState<(typeof processingSamples)[number]>();
@@ -31,9 +33,26 @@ export function BoardChart({
   const chartKind =
     customChart?.kind ?? (chart.kind === 'line' || chart.kind === 'bar' ? chart.kind : undefined);
 
+  const script = customChart?.script;
+  const showChart = !script || script.lastSuccess !== undefined;
+  const visibleChart =
+    script && warehouse && customChart?.points.some((point) => point.warehouse !== undefined)
+      ? {
+          ...customChart,
+          points: customChart.points.filter((point) => point.warehouse === warehouse),
+        }
+      : customChart;
+  const hasData = !visibleChart || visibleChart.points.length > 0;
+  const time = (timestamp: number) =>
+    new Intl.DateTimeFormat('zh-CN', {
+      dateStyle: 'short',
+      timeStyle: 'medium',
+      timeZone: 'Asia/Shanghai',
+    }).format(timestamp);
+
   const knowledge =
     'topic' in chart
-      ? `/knowledge/${chart.topic}/${chart.knowledgeVersion}?${new URLSearchParams({ board: boardId })}`
+      ? `/knowledge/${chart.topic}/${chart.knowledgeVersion}?${new URLSearchParams(boardId ? { board: boardId } : {})}`
       : undefined;
 
   return (
@@ -46,7 +65,7 @@ export function BoardChart({
           </button>
         )}
       </div>
-      {chartKind && chartKind !== 'table' && (
+      {showChart && hasData && chartKind && chartKind !== 'table' && (
         <Suspense
           fallback={
             <div className="my-2 h-56 sm:h-60" role="status">
@@ -54,14 +73,18 @@ export function BoardChart({
             </div>
           }
         >
-          <SalesChart kind={chartKind} title={chart.name} customChart={customChart} />
+          <SalesChart kind={chartKind} title={chart.name} customChart={visibleChart} />
         </Suspense>
       )}
-      {customChart?.kind === 'table' && (
+      {showChart && hasData && visibleChart?.kind === 'table' && (
         <DataTable
           headers={['标签', '数值']}
-          rows={customChart.points.map(({ label, value }) => [label, value])}
+          rows={visibleChart.points.map(({ label, value }) => [label, value ?? '—'])}
         />
+      )}
+      {script && showChart && !hasData && <p className="my-4 text-muted">暂无数据</p>}
+      {script && !showChart && script.status !== 'failed' && (
+        <p className="my-4 text-muted">等待首次刷新</p>
       )}
       {chart.kind === 'inventory' && (
         <>
@@ -122,6 +145,43 @@ export function BoardChart({
       )}
       <footer className="mt-auto pt-4">
         <p className="text-xs text-muted">来源 · {chart.dataset}</p>
+        {script && (
+          <div className="mt-2 grid gap-2 text-xs text-muted">
+            <p role="status">
+              版本 {script.version} ·{' '}
+              {
+                {
+                  waiting: '等待刷新',
+                  running: '刷新中…',
+                  success: '刷新成功',
+                  failed: '刷新失败',
+                }[script.status]
+              }
+            </p>
+            <p>
+              最近成功 · {script.lastSuccess === undefined ? '—' : time(script.lastSuccess)} ·
+              覆盖截止 · {script.coverage ?? '未知'}
+            </p>
+            {script.nextRefresh !== undefined && <p>下次计划刷新 · {time(script.nextRefresh)}</p>}
+            {script.error && (
+              <p role="alert" className="text-down">
+                {script.error}
+              </p>
+            )}
+            {!presenting && customChart && onRefreshScript && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="dc-btn"
+                  disabled={script.status === 'running'}
+                  onClick={() => onRefreshScript(customChart)}
+                >
+                  手动刷新
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {!presenting && knowledge && 'knowledgeVersion' in chart && (
           <Link className="dc-btn-text mt-2" to={knowledge}>
             查看口径 · {chart.knowledgeVersion} →

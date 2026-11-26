@@ -161,6 +161,20 @@
 }
 
 @layer components {
+  .dc-main:has(> .dc-chart-editor) {
+    @apply max-w-none pb-8 pt-5;
+  }
+
+  .dc-code-editor {
+    --dc-code-editor-height: max(18rem, calc(100dvh - 22rem));
+  }
+
+  @media (max-width: 700px) {
+    .dc-code-editor {
+      --dc-code-editor-height: max(18rem, calc(100dvh - 31rem));
+    }
+  }
+
   .dc-page-heading {
     @apply flex flex-wrap items-center justify-between gap-4;
   }

@@ -5,7 +5,6 @@ import { Link, useHref, useSearchParams } from 'react-router-dom';
 import { Dialog, PageHeading } from '../components/PageParts';
 import { chartLibrary, type Board } from '../data/demo';
 import { BoardChart } from './BoardCharts';
-import { NewChartSheet } from './NewChartSheet';
 import { type CustomChart } from '../data/customCharts';
 
 const filters = [
@@ -19,7 +18,7 @@ interface Props {
   updateBoard: (id: string, changes: Partial<Board>) => void;
   addBoard: (board: Board) => void;
   customCharts: CustomChart[];
-  createChart: (boardId: string, chart: CustomChart) => void;
+  refreshChart: (chart: CustomChart) => void;
 }
 
 export function DashboardsPage({
@@ -27,14 +26,13 @@ export function DashboardsPage({
   updateBoard,
   addBoard,
   customCharts,
-  createChart,
+  refreshChart,
 }: Props) {
   const [query, setQuery] = useSearchParams();
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [editingBoard, setEditingBoard] = useState<string>();
   const [dialog, setDialog] = useState<'share' | 'archive' | 'rename' | 'charts'>();
-  const [chartSheetBoard, setChartSheetBoard] = useState<string>();
   const [status, setStatus] = useState('');
   const board = boards.find((item) => item.id === query.get('board'));
   const boardHref = useHref({
@@ -107,7 +105,6 @@ export function DashboardsPage({
     setQuery(id ? { board: id } : {});
     setEditingBoard(undefined);
     setDialog(undefined);
-    setChartSheetBoard(undefined);
     setStatus('');
     window.scrollTo(0, 0);
   }
@@ -285,15 +282,6 @@ export function DashboardsPage({
                 {!board.archived && (
                   <>
                     {board.cards.length > 0 && (
-                      <button
-                        type="button"
-                        className="dc-btn"
-                        onClick={() => setChartSheetBoard(board.id)}
-                      >
-                        ＋ 新建图表
-                      </button>
-                    )}
-                    {board.cards.length > 0 && (
                       <button className="dc-btn" onClick={() => setDialog('charts')}>
                         ＋ 添加已有图表
                       </button>
@@ -337,6 +325,7 @@ export function DashboardsPage({
                   boardId={board.id}
                   warehouse={warehouse}
                   presenting={presenting}
+                  onRefreshScript={!board.archived ? refreshChart : undefined}
                   onRemove={
                     editing && !presenting
                       ? () =>
@@ -353,13 +342,6 @@ export function DashboardsPage({
               <h2>这个看板还没有图表</h2>
               {!board.archived && !presenting && (
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="dc-btn dc-btn-primary"
-                    onClick={() => setChartSheetBoard(board.id)}
-                  >
-                    ＋ 新建图表
-                  </button>
                   <button className="dc-btn" onClick={() => setDialog('charts')}>
                     ＋ 添加已有图表
                   </button>
@@ -477,20 +459,11 @@ export function DashboardsPage({
           </button>
         </Dialog>
       )}
-      {board && !board.archived && chartSheetBoard === board.id && (
-        <NewChartSheet
-          boardName={board.name}
-          onClose={() => setChartSheetBoard(undefined)}
-          onCreate={(chart) => {
-            createChart(board.id, chart);
-            setChartSheetBoard(undefined);
-            setStatus('图表已创建并添加到当前看板');
-          }}
-        />
-      )}
       {board && !board.archived && dialog === 'charts' && (
         <Dialog title="添加已有图表" onClose={() => setDialog(undefined)}>
-          <p className="my-3 text-muted">添加共享图表引用。</p>
+          <Link className="dc-btn-text mt-3" to="/charts">
+            前往图表管理 →
+          </Link>
           {[...chartLibrary, ...customCharts].map((chart) => (
             <div
               key={chart.id}

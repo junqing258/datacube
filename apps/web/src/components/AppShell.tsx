@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { BookOpen, Bot, Cable, Home, LayoutGrid } from 'lucide-react';
+import { BookOpen, Bot, Cable, ChartNoAxesCombined, Home, LayoutGrid } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { getHealth } from '@/services/health';
@@ -8,6 +8,7 @@ import { getHealth } from '@/services/health';
 const NAV_ITEMS = [
   { to: '/', label: '首页', icon: Home, end: true },
   { to: '/dashboards', label: '看板', icon: LayoutGrid },
+  { to: '/charts', label: '图表管理', icon: ChartNoAxesCombined },
   { to: '/knowledge', label: '业务知识', icon: BookOpen },
   { to: '/data-sources', label: '数据接入', icon: Cable },
   { to: '/ai-access', label: 'AI接入', icon: Bot },

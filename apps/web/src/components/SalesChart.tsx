@@ -87,7 +87,7 @@ function customChartOption(
     areaColor,
   }: Record<'primary' | 'muted' | 'gridColor' | 'areaColor', string>,
 ): ChartOption {
-  const data = points.map(({ label, value }) => ({ name: label, value }));
+  const data = points.map(({ label, value }) => ({ name: label, value: value ?? undefined }));
   switch (kind) {
     case 'pie':
       return { series: { type: 'pie', name, radius: '65%', data, avoidLabelOverlap: true } };
@@ -97,7 +97,7 @@ function customChartOption(
           type: 'funnel',
           name,
           sort: 'none',
-          max: points.reduce((max, point) => Math.max(max, point.value), 0),
+          max: points.reduce((max, point) => Math.max(max, point.value ?? 0), 0),
           minSize: '0%',
           gap: 3,
           label: { position: 'inside' },
@@ -119,7 +119,7 @@ function customChartOption(
           type: 'scatter',
           name,
           dimensions: ['X', 'Y'],
-          data: points.map(({ label, x, value }) => ({ name: label, value: [x ?? 0, value] })),
+          data: points.map(({ label, x, value }) => ({ name: label, value: [x ?? 0, value ?? 0] })),
         },
       };
     }
@@ -140,12 +140,12 @@ function customChartOption(
           dimensions: ['经度', '纬度', '数值'],
           data: points.map(({ label, longitude, latitude, value }) => ({
             name: label,
-            value: [longitude ?? 0, latitude ?? 0, value],
+            value: [longitude ?? 0, latitude ?? 0, value ?? 0],
           })),
         },
       };
     case 'radar': {
-      const max = points.reduce((max, point) => Math.max(max, point.value), 1);
+      const max = points.reduce((max, point) => Math.max(max, point.value ?? 0), 1);
       return {
         radar: {
           radius: '60%',
@@ -155,7 +155,7 @@ function customChartOption(
         series: {
           type: 'radar',
           name,
-          data: [{ name, value: points.map(({ value }) => value) }],
+          data: [{ name, value: points.map(({ value }) => value ?? 0) }],
           areaStyle: { opacity: 0.15 },
         },
       };
@@ -231,7 +231,7 @@ export default function SalesChart({
         type: 'bar',
         name: customChart ? title : '销售额',
         data: points.map(({ value }, index) => ({
-          value,
+          value: value ?? undefined,
           itemStyle: { color: customChart ? primary : channelColors[index] },
         })),
         barMaxWidth: 20,
@@ -241,7 +241,7 @@ export default function SalesChart({
       series = {
         type: 'line',
         name: title,
-        data: customChart.points.map(({ value }) => value),
+        data: customChart.points.map(({ value }) => value ?? '-'),
         itemStyle: { color: primary },
       };
     } else if (kind === 'line') {
@@ -324,7 +324,7 @@ export default function SalesChart({
   }, [kind, title, customChart]);
 
   const summary = customChart
-    ? customChart.points.map(({ label, value }) => `${label} ${value}`).join('，')
+    ? customChart.points.map(({ label, value }) => `${label} ${value ?? '—'}`).join('，')
     : kind === 'line'
       ? '使用 11 月 1 日至 25 日的样例数据，对比本月和上月同期销售额。'
       : channels.map(({ label, value }) => `${label} ${value.toFixed(1)} 万元`).join('，');

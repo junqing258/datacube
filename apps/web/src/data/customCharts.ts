@@ -1,3 +1,5 @@
+import { type ScriptSource } from './chartScript';
+
 export const chartKinds = {
   line: '折线图',
   bar: '柱状图',
@@ -12,7 +14,8 @@ export const chartKinds = {
 
 export interface ChartPoint {
   label: string;
-  value: number;
+  value: number | null;
+  warehouse?: string;
   x?: number;
   longitude?: number;
   latitude?: number;
@@ -24,6 +27,9 @@ export interface CustomChart {
   kind: keyof typeof chartKinds;
   dataset: string;
   points: ChartPoint[];
+  definition?: string;
+  script?: ScriptSource;
+  codeSource?: { source: 'sql' | 'api'; code: string };
 }
 
 export const chartInput = {
@@ -36,8 +42,16 @@ export const chartInput = {
 } as const;
 
 export function validateChartPoints(kind: CustomChart['kind'], points: ChartPoint[]) {
-  if (!points.length) return '请至少输入一行数据。';
+  if (!points.length) return '查询至少需要返回一行数据。';
 
+  if (
+    kind !== 'line' &&
+    kind !== 'bar' &&
+    kind !== 'table' &&
+    points.some(({ value }) => value === null)
+  ) {
+    return '该图表需要每行都有数值。';
+  }
   if (kind === 'scatter' && points.some(({ x }) => !Number.isFinite(x))) {
     return '散点图每行都需要一个有效的 X 坐标。';
   }
@@ -58,14 +72,17 @@ export function validateChartPoints(kind: CustomChart['kind'], points: ChartPoin
   if (kind === 'radar' && points.length < 3) return '雷达图至少需要三个指标。';
   if (
     (kind === 'pie' || kind === 'radar' || kind === 'funnel') &&
-    points.some(({ value }) => value < 0)
+    points.some(({ value }) => (value ?? 0) < 0)
   ) {
     return '该图表的数值必须大于或等于 0。';
   }
   if ((kind === 'pie' || kind === 'funnel') && points.every(({ value }) => value === 0)) {
     return '请至少提供一个大于 0 的数值。';
   }
-  if (kind === 'gauge' && (points.length !== 1 || points[0].value < 0 || points[0].value > 100)) {
+  if (
+    kind === 'gauge' &&
+    (points.length !== 1 || (points[0].value ?? 0) < 0 || (points[0].value ?? 0) > 100)
+  ) {
     return '仪表盘需要一行数据，数值必须在 0 到 100 之间。';
   }
 }
