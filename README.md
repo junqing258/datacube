@@ -48,7 +48,7 @@ Vite 的 `/api` 代理与 Nest 使用相同的 `PORT` 优先级：进程环境�
 
 ## 登录、真实数据与看板
 
-浏览器会话使用同源 `HttpOnly` Cookie。种子脚本按空间、连接和数据集标识幂等初始化用户、空间、数据集目录、内置看板和销售趋势图表。
+浏览器会话使用同源 `HttpOnly` Cookie。种子脚本按空间、连接和数据集标识幂等初始化用户、空间、数据集目录、内置看板及图表。
 
 ```bash
 pnpm business:sample         # 生成本地示例业务库 apps/server/prisma/sample-business.db
@@ -61,7 +61,7 @@ pnpm business:sample         # 生成本地示例业务库 apps/server/prisma/sa
 SEED_ADMIN_PASSWORD=<至少 8 位>
 SEED_MEMBER_PASSWORD=<至少 8 位>
 CHART_DATA_CONNECTIONS='{"local":"file:///<绝对路径>/apps/server/prisma/sample-business.db"}'
-CHART_DATA_SOURCES='{"sales_daily":{"name":"销售日汇总","connection":"local","table":"sales_daily","fields":["day","order_count","paid_amount","refund_amount","net_amount"],"timeField":"day"},"channel_sales_daily":{"name":"渠道销售日汇总","connection":"local","table":"channel_sales_daily","fields":["day","channel","order_count","paid_amount","refund_amount","net_amount"],"timeField":"day"}}'
+CHART_DATA_SOURCES='{"sales_daily":{"name":"销售日汇总","connection":"local","table":"sales_daily","fields":["day","order_count","paid_amount","refund_amount","net_amount"],"timeField":"day"},"channel_sales_daily":{"name":"渠道销售日汇总","connection":"local","table":"channel_sales_daily","fields":["day","channel","order_count","paid_amount","refund_amount","net_amount"],"timeField":"day"},"live_sessions":{"name":"直播场次汇总（示例）","connection":"local","table":"live_sessions","fields":["day","platform","session_name","order_count","paid_amount","refund_amount","net_amount"],"timeField":"day"},"processing_batches":{"name":"加工批次核对（示例）","connection":"local","table":"processing_batches","fields":["day","warehouse","batch","completed_at","confirmed_at","input_kg","waste_kg","qualified_kg","received_kg","gap_kg","receipt_status"],"timeField":"day"},"stock_snapshots":{"name":"WMS 库存快照（示例）","connection":"local","table":"stock_snapshots","fields":["day","snapshot_at","warehouse","sku","batch","expires_on","days_to_expiry","available_qty"],"timeField":"day"}}'
 
 pnpm prisma:migrate
 pnpm prisma:seed
@@ -71,6 +71,9 @@ pnpm dev
 开发环境未设置口令时使用默认口令 `admin-datacube-2026`（管理员）和 `member-datacube-2026`（普通成员），账号为 `admin@datacube.local` / `member@datacube.local`；生产环境必须显式设置。
 
 - 登录后「数据接入」展示当前空间授权的数据集目录，连接配置与凭据只保留在服务端环境变量，页面不展示数据库地址。
+- 「直播经营复盘」默认查看最近 30 个自然日。示例库将合成直播订单归到抖音和视频号场次，净成交额按支付金额减成功退款计算，平台退款率按成功退款总额除以支付总额计算。
+- 「加工损耗与入库核对」默认查看最近 30 个自然日，统计范围排除华北仓。示例库按仓库和批次汇总合成 ERP 完工单与 WMS 已确认入库单。加工损耗率按总报损除以总投料计算，入库差额等于合格产出减已确认入库。单边缺失时保留对应状态，差额留空。
+- 「多仓库存」的 30 天趋势每天取最后一次库存快照，各仓对比使用同一个最新快照。单仓 SKU 的各批次可用件数合计为零时计为缺货。临期统计包含快照当天至之后第 3 天到期的可用件数。
 - SQL 图表使用数据集的 `id` 作为 `definition.json` 的 `dataSource`，`query.sql` 返回 `label` 和 `value` 两列，日期参数使用 `:startDay` 和 `:endDay`。保存后由服务端按 30 天窗口执行并落库，结果保留 7 天。
 - JS 图表保存脚本定义，取数仍在浏览器执行。`extract.js` 的 `dataset` 同样填写数据集 `id`。
 - PostgreSQL 和 MySQL 使用只读连接字符串，`secretRef` 指向 `CHART_DATA_CONNECTIONS` 中的连接标识。SQL 的访问范围由业务数据库账号的授权限定，SQLite 则以只读方式访问配置的文件。

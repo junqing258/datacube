@@ -93,12 +93,12 @@ export function HomePage() {
     : favorite.isPending
       ? '保存收藏…'
       : '';
-  const showAlert = active.some((board) => board.kind === 'processing');
+  const processingBoard = active.find((board) => board.kind === 'processing');
 
   return (
     <>
       <div
-        className={`grid gap-4 ${showAlert ? 'min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(280px,0.36fr)]' : ''}`}
+        className={`grid gap-4 ${processingBoard ? 'min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(280px,0.36fr)]' : ''}`}
       >
         <section className="flex min-w-0 flex-col justify-center bg-surface-warm p-[clamp(24px,4vw,48px)]">
           <h1 className="font-display text-[clamp(36px,4.6vw,56px)] font-normal leading-[1.2] after:mt-4 after:block after:h-1 after:w-10 after:bg-gold">
@@ -122,15 +122,17 @@ export function HomePage() {
             </p>
           )}
         </section>
-        {showAlert && (
+        {processingBoard && (
           <section className="dc-page-card flex flex-col items-start justify-center gap-2.5 bg-surface-tint p-6">
             <span className="dc-tag bg-white text-muted">加工主题</span>
             <h2 className="text-[17px] font-medium leading-snug">加工损耗与入库核对</h2>
             <p className="text-[13px] leading-relaxed text-body">
-              加工批次查询尚未迁入平台。打开看板查看当前配置。
+              {processingBoard.cards.length
+                ? '查看加工损耗率，按批次核对合格产出与已确认入库。'
+                : '加工看板暂无图表。'}
             </p>
             <Link
-              to={`/dashboards?board=${active.find((board) => board.kind === 'processing')?.id ?? ''}`}
+              to={`/dashboards?board=${processingBoard.id}`}
               className="dc-btn-text min-h-[34px]"
             >
               打开加工看板 →

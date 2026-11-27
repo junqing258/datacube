@@ -374,6 +374,7 @@ export function DashboardsPage() {
                       key={card.id}
                       chart={card.chart}
                       title={card.title}
+                      fullWidth={card.layout?.fullWidth === true}
                       presenting={presenting}
                       refreshKey={refreshKey}
                       onRemove={

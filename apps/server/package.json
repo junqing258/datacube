@@ -21,7 +21,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local prisma/seed.ts",
     "business:sample": "tsx prisma/sample-business.ts"
   },
   "dependencies": {

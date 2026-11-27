@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Download, RefreshCw } from 'lucide-react';
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DataTable } from '../components/PageParts';
 import { parseChartDefinition, parseExtractScript } from '../data/chartDefinition';
@@ -111,12 +111,14 @@ function sqlDraft(chart: CustomChart, detail: Awaited<ReturnType<typeof getChart
 export function BoardChart({
   chart,
   title,
+  fullWidth = false,
   presenting = false,
   onRemove,
   refreshKey = 0,
 }: {
   chart: ChartSummary;
   title?: string;
+  fullWidth?: boolean;
   presenting?: boolean;
   onRemove?: () => void;
   refreshKey?: number;
@@ -224,16 +226,26 @@ export function BoardChart({
     refreshKey,
   ]);
 
-  const points = isSql ? (result ? toPoints(result.rows) : []) : (scriptPoints ?? []);
-  const customChart: CustomChart = {
-    id: chart.id,
-    name: chart.name,
-    kind: chart.kind,
-    dataset: chart.dataset,
-    points,
-  };
+  const rows = result?.rows;
+  const customChart = useMemo<CustomChart>(
+    () => ({
+      id: chart.id,
+      name: chart.name,
+      kind: chart.kind,
+      dataset: chart.dataset,
+      points: isSql ? toPoints(rows ?? []) : (scriptPoints ?? []),
+    }),
+    [chart.id, chart.name, chart.kind, chart.dataset, isSql, rows, scriptPoints],
+  );
+  const { points } = customChart;
   const hasData = points.length > 0;
-  const canRender = chart.kind !== 'table' && points.length > 0;
+  const canRender = chart.kind !== 'table' && hasData;
+  const isRefreshing = !chart.archived && status === 'loading' && hasData;
+  const snapshotAt = result?.rows[0]?.snapshot_at;
+  const sharedSnapshot =
+    typeof snapshotAt === 'string' && result?.rows.every((row) => row.snapshot_at === snapshotAt)
+      ? snapshotAt
+      : undefined;
   const lastUpdate = isSql
     ? timeOf(result?.executedAt ?? detail.data?.latest?.completedAt)
     : scriptPoints
@@ -247,7 +259,7 @@ export function BoardChart({
   }
 
   return (
-    <section className="dc-page-card flex min-w-0 flex-col">
+    <section className={`dc-page-card flex min-w-0 flex-col ${fullWidth ? 'col-span-full' : ''}`}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h3>
           {title ?? chart.name}
@@ -272,11 +284,9 @@ export function BoardChart({
         </p>
       )}
 
-      {!chart.archived && status === 'loading' && hasData && (
-        <p className="text-sm text-muted" role="status">
-          刷新中…
-        </p>
-      )}
+      <span className="sr-only" role="status">
+        {isRefreshing ? '刷新中…' : ''}
+      </span>
 
       {!chart.archived && status === 'failed' && (
         <div className="my-4 grid gap-2">
@@ -337,11 +347,12 @@ export function BoardChart({
         <p>
           来源 · {chart.dataset} · {isSql ? '保存查询' : '浏览器脚本'}
         </p>
+        {sharedSnapshot && <p>快照时间 · {sharedSnapshot}</p>}
         <p>
-          数据时点 · {lastUpdate}
+          {sharedSnapshot ? '查询时间' : '数据时点'} · {lastUpdate}
           {isSql && result?.truncated && ' · 结果已截断'}
         </p>
-        {isSql && status === 'success' && result && (
+        {isSql && result && (
           <p>
             结果共 {format(result.rowCount)} 行 · 有效至 {timeOf(result.expiresAt)}
           </p>
@@ -354,7 +365,12 @@ export function BoardChart({
               disabled={status === 'loading'}
               onClick={refresh}
             >
-              <RefreshCw size={14} aria-hidden="true" /> 刷新
+              <RefreshCw
+                size={14}
+                aria-hidden="true"
+                className={status === 'loading' ? 'motion-safe:animate-spin' : undefined}
+              />{' '}
+              刷新
             </button>
             {isSql && result && (
               <a className="dc-btn" href={executionDownloadUrl(result.executionId)} download>

@@ -46,6 +46,7 @@ export interface JsChartSpec {
 export type ChartSpec = SqlChartSpec | JsChartSpec;
 
 const identifier = /^[A-Za-z_][A-Za-z0-9_]*$/;
+const resultColumn = /^[\p{L}_][\p{L}\p{N}_]*$/u;
 const datePattern = /^(\d{4}-\d{2}-\d{2})$/;
 const parameterTypes = new Set<string>(['string', 'number', 'boolean', 'date']);
 
@@ -113,7 +114,7 @@ function readMapping(value: unknown) {
     if (!['label', 'value', 'x', 'longitude', 'latitude'].includes(column)) {
       throw new BadRequestException(`未知的图表映射字段 ${column}。`);
     }
-    if (typeof field !== 'string' || !identifier.test(field)) {
+    if (typeof field !== 'string' || !resultColumn.test(field)) {
       throw new BadRequestException(`图表映射 ${column} 须为字段名。`);
     }
     mapping[column as MappingColumn] = field;

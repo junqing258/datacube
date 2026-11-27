@@ -1,6 +1,8 @@
 import { DatabaseSync } from 'node:sqlite';
 import { rmSync } from 'node:fs';
 import { join } from 'node:path';
+import { seedSampleInventory } from './sample-inventory';
+import { seedSampleProcessing } from './sample-processing';
 
 const target =
   process.env.BUSINESS_SQLITE_PATH ?? join(process.cwd(), 'prisma', 'sample-business.db');
@@ -19,10 +21,17 @@ function random() {
 }
 
 const channels = ['微信小程序', '平台电商', '直播渠道', '其他渠道'];
+const livePlatforms = ['抖音', '视频号'];
 
 rmSync(target, { force: true });
 const database = new DatabaseSync(target);
 database.exec(`
+  CREATE TABLE broadcasts (
+    id TEXT PRIMARY KEY,
+    day TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    session_name TEXT NOT NULL
+  );
   CREATE TABLE orders (
     id INTEGER PRIMARY KEY,
     order_no TEXT NOT NULL UNIQUE,
@@ -30,7 +39,8 @@ database.exec(`
     paid_amount REAL NOT NULL,
     channel TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'paid',
-    is_test INTEGER NOT NULL DEFAULT 0
+    is_test INTEGER NOT NULL DEFAULT 0,
+    live_session_id TEXT REFERENCES broadcasts(id)
   );
   CREATE TABLE refunds (
     id INTEGER PRIMARY KEY,
@@ -42,7 +52,10 @@ database.exec(`
 `);
 
 const insertOrder = database.prepare(
-  'INSERT INTO orders (order_no, paid_at, paid_amount, channel, status, is_test) VALUES (?, ?, ?, ?, ?, ?)',
+  'INSERT INTO orders (order_no, paid_at, paid_amount, channel, status, is_test, live_session_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+);
+const insertBroadcast = database.prepare(
+  'INSERT OR IGNORE INTO broadcasts (id, day, platform, session_name) VALUES (?, ?, ?, ?)',
 );
 const insertRefund = database.prepare(
   'INSERT INTO refunds (order_id, refund_amount, status, success_at) VALUES (?, ?, ?, ?)',
@@ -56,13 +69,21 @@ for (let offset = -44; offset <= 0; offset++) {
   for (let index = 0; index < count; index++) {
     orderId++;
     const amount = Math.round((60 + random() * 900) * 100) / 100;
+    const channel = channels[Math.floor(random() * channels.length)];
+    let sessionId: string | null = null;
+    if (channel === '直播渠道') {
+      const platform = livePlatforms[(orderId + Math.abs(offset)) % livePlatforms.length];
+      sessionId = `${paidAt}-${platform}`;
+      insertBroadcast.run(sessionId, paidAt, platform, `${paidAt} ${platform}`);
+    }
     insertOrder.run(
       `${paidAt.replaceAll('-', '')}-${String(orderId).padStart(4, '0')}`,
       paidAt,
       amount,
-      channels[Math.floor(random() * channels.length)],
+      channel,
       index === 0 && random() < 0.3 ? 'unpaid' : 'paid',
       random() < 0.05 ? 1 : 0,
+      sessionId,
     );
     // Some orders have a successful refund; a few settle after the paid day.
     if (random() < 0.22) {
@@ -117,12 +138,41 @@ database.exec(`
 
   CREATE VIEW sales_snapshot AS
   SELECT MAX(paid_at) AS data_as_of FROM orders WHERE status = 'paid' AND is_test = 0;
+
+  CREATE TABLE live_sessions (
+    day TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    session_name TEXT PRIMARY KEY,
+    order_count INTEGER NOT NULL,
+    paid_amount REAL NOT NULL,
+    refund_amount REAL NOT NULL,
+    net_amount REAL NOT NULL
+  );
+
+  INSERT INTO live_sessions
+  SELECT b.day, b.platform, b.session_name,
+         COUNT(*),
+         ROUND(SUM(o.paid_amount), 2),
+         ROUND(SUM(COALESCE(r.amount, 0)), 2),
+         ROUND(SUM(o.paid_amount) - SUM(COALESCE(r.amount, 0)), 2)
+  FROM broadcasts b
+  JOIN orders o ON o.live_session_id = b.id
+  LEFT JOIN (
+    SELECT order_id, SUM(refund_amount) AS amount
+    FROM refunds
+    WHERE status = 'succeeded'
+    GROUP BY order_id
+  ) r ON r.order_id = o.id
+  WHERE o.status = 'paid' AND o.is_test = 0
+  GROUP BY b.id, b.day, b.platform, b.session_name;
 `);
 
 const orders = database.prepare('SELECT COUNT(*) AS count FROM orders').get() as { count: number };
 const days = database.prepare('SELECT COUNT(*) AS count FROM sales_daily').get() as {
   count: number;
 };
+seedSampleProcessing(database);
+seedSampleInventory(database);
 database.close();
 console.log(`已生成示例业务库 ${target}`);
 console.log(`订单 ${orders.count} 条，销售日汇总 ${days.count} 天。`);

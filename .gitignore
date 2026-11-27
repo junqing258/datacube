@@ -31,6 +31,6 @@ Thumbs.db
 
 # Server runtime data
 apps/server/uploads/
-apps/server/*.db
+# apps/server/*.db
 apps/server/prisma/dev.db*
 apps/server/prisma/sample-business.db*
