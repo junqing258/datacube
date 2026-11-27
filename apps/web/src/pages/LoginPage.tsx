@@ -1,10 +1,16 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState, type FormEvent } from 'react';
 import { apiMessage } from '../services/api';
-import { login, type SessionPayload } from '../services/auth';
+import { getDemoLogin, login, type SessionPayload } from '../services/auth';
 
 export function LoginPage({ onLogin }: { onLogin: (session: SessionPayload) => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const { data: demoLogin } = useQuery({
+    queryKey: ['demo-login'],
+    queryFn: getDemoLogin,
+    retry: false,
+  });
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -30,7 +36,9 @@ export function LoginPage({ onLogin }: { onLogin: (session: SessionPayload) => v
           <span className="dc-logo-mark" />
         </span>
         <h1 className="mt-6 font-display text-3xl font-normal leading-tight">登录 DataCube</h1>
-        <p className="mt-2 text-sm text-muted">使用平台账号查看经营看板与真实业务数据。</p>
+        <p className="mt-2 text-sm text-muted">
+          {demoLogin ? '已填入演示账号，点击登录查看示例看板。' : '使用平台账号查看经营看板。'}
+        </p>
         <form className="mt-6 grid gap-4" onSubmit={submit}>
           <label className="dc-field">
             邮箱
@@ -38,6 +46,7 @@ export function LoginPage({ onLogin }: { onLogin: (session: SessionPayload) => v
               className="dc-control"
               type="email"
               name="email"
+              defaultValue={demoLogin?.email}
               autoComplete="username"
               required
               placeholder="运营账号邮箱"
@@ -49,6 +58,7 @@ export function LoginPage({ onLogin }: { onLogin: (session: SessionPayload) => v
               className="dc-control"
               type="password"
               name="password"
+              defaultValue={demoLogin?.password}
               autoComplete="current-password"
               required
             />

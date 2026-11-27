@@ -5,6 +5,8 @@ services:
     ports:
       - '${DATACUBE_PORT:-3001}:3001'
     environment:
+      # Serialize platform database operations for the single SQLite file.
+      DATABASE_URL: file:/data/datacube.db?connection_limit=1
       SESSION_IDLE_MINUTES: ${SESSION_IDLE_MINUTES:-480}
       SESSION_MAX_DAYS: ${SESSION_MAX_DAYS:-7}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
@@ -12,6 +14,8 @@ services:
       SEED_MEMBER_EMAIL: ${SEED_MEMBER_EMAIL:-member@datacube.local}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:?请配置 SEED_ADMIN_PASSWORD}
       SEED_MEMBER_PASSWORD: ${SEED_MEMBER_PASSWORD:?请配置 SEED_MEMBER_PASSWORD}
+      DEMO_LOGIN_ENABLED: ${DEMO_LOGIN_ENABLED:-false}
+      DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-}
       CHART_DATA_CONNECTIONS: ${CHART_DATA_CONNECTIONS:-}
       CHART_DATA_SOURCES: ${CHART_DATA_SOURCES:-}
     volumes:

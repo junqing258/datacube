@@ -5,6 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { demoEmail } from './demo-login';
 import { createSessionToken, digestToken, hashPassword, verifyPassword } from './password';
 import { type SessionSpace } from './session.types';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -85,6 +86,9 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const normalized = email.trim().toLowerCase();
+    if (normalized === demoEmail && this.config.get('DEMO_LOGIN_ENABLED') !== 'true') {
+      throw new UnauthorizedException('演示登录未启用。');
+    }
     const user = await this.prisma.user.findUnique({ where: { email: normalized } });
     if (!user || !(await verifyPassword(password, user.password))) {
       throw new UnauthorizedException('邮箱或密码不正确。');
@@ -181,6 +185,9 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || !(await verifyPassword(current, user.password))) {
       throw new BadRequestException('当前密码不正确。');
+    }
+    if (user.email === demoEmail) {
+      throw new BadRequestException('演示账号的密码由部署配置管理。');
     }
     await this.prisma.user.update({
       where: { id: userId },

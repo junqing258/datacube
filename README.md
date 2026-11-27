@@ -89,7 +89,11 @@ pnpm dev
 
 Web 由 NestJS 直接提供，Compose 只启动一个 Server 容器。容器启动时执行 Prisma 迁移并幂等运行种子，SQLite 数据存放在 Compose 的 `data` 卷中。种子只在首次创建用户时使用初始口令，后续启动不会重置已有密码。HTTPS 部署时将 `SESSION_COOKIE_SECURE` 设为 `true`。默认部署目录为 `/opt/datacube`，后续更新在同一目录执行相同的部署命令即可复用数据卷。
 
+演示部署可设置 `DEMO_LOGIN_ENABLED=true` 和独立的 `DEMO_LOGIN_PASSWORD`。登录页会向访客预填专用成员账号 `demo@datacube.local`。使用示例看板时，沿用上文的数据目录配置，将连接地址改为 `file:///tmp/datacube-sample-business.db`，容器启动时会生成该示例库。
+
 可用 `pnpm run deploy test` 读取 `.env.test`。环境专用文件会覆盖可选的根目录 `.env`。同一主机上的不同环境应使用不同的部署目录末级名称和端口，以隔离 Compose 项目及数据库。
+
+设置 `DEPLOY_BUILD_ON_TARGET=1` 可使用目标机的 Docker Engine 构建。本地仍需 Docker CLI 和 Buildx。可通过 `DEPLOY_DEBIAN_MIRROR` 指定目标机能访问的 Debian 软件包镜像站地址。
 
 ## 常用命令
 

@@ -1,5 +1,7 @@
 FROM node:24-bookworm-slim AS base
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+ARG DEBIAN_MIRROR
+RUN if [ -n "$DEBIAN_MIRROR" ]; then sed -i "s|http://deb.debian.org|$DEBIAN_MIRROR|g" /etc/apt/sources.list.d/debian.sources; fi \
+    && apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 
@@ -29,4 +31,4 @@ RUN mkdir -p /data && chown node:node /data
 WORKDIR /app/apps/server
 USER node
 EXPOSE 3001
-CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node node_modules/tsx/dist/cli.mjs prisma/seed.ts && exec node dist/main.js"]
+CMD ["sh", "-c", "set -e; if [ \"${DEMO_LOGIN_ENABLED:-false}\" = true ]; then BUSINESS_SQLITE_PATH=/tmp/datacube-sample-business.db node node_modules/tsx/dist/cli.mjs prisma/sample-business.ts; fi; node node_modules/prisma/build/index.js migrate deploy; node node_modules/tsx/dist/cli.mjs prisma/seed.ts; exec node dist/main.js"]

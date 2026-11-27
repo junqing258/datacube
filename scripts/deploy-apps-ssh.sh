@@ -17,6 +17,8 @@ usage() {
   DEPLOY_PLATFORM      镜像平台，默认根据远端架构识别
   DEPLOY_IMAGE_TAG     镜像标签，默认 Git 短 SHA 加 UTC 时间
   DEPLOY_DRY_RUN=1     仅校验配置，无需连接远端或 Docker Engine
+  DEPLOY_BUILD_ON_TARGET=1  使用目标机的 Docker Engine 构建
+  DEPLOY_DEBIAN_MIRROR     Debian 软件包镜像地址，可选
 
 应用配置 DATACUBE_PORT、SEED_*、SESSION_* 和业务数据目录见 .env.deploy.example。
 HELP
@@ -87,7 +89,7 @@ printf '\nDATACUBE_SERVER_IMAGE=%s\n' "$image" >> "$env_file"
 compose_config() (
   unset DATACUBE_SERVER_IMAGE DATACUBE_PORT SEED_ADMIN_PASSWORD SEED_MEMBER_PASSWORD \
     SEED_ADMIN_EMAIL SEED_MEMBER_EMAIL SESSION_IDLE_MINUTES SESSION_MAX_DAYS \
-    SESSION_COOKIE_SECURE CHART_DATA_CONNECTIONS CHART_DATA_SOURCES
+    SESSION_COOKIE_SECURE CHART_DATA_CONNECTIONS CHART_DATA_SOURCES DEMO_LOGIN_ENABLED DEMO_LOGIN_PASSWORD
   docker compose --env-file "$env_file" -f "$compose_file" config "$@"
 )
 compose_config --quiet
@@ -98,9 +100,13 @@ if [[ "${DEPLOY_DRY_RUN:-0}" == 1 ]]; then
   exit 0
 fi
 
-docker info >/dev/null
-docker buildx version >/dev/null
 remote 'docker info >/dev/null && docker compose up --help | grep -- --wait-timeout >/dev/null && command -v gzip >/dev/null && command -v flock >/dev/null'
+build_command=(docker)
+if [[ "${DEPLOY_BUILD_ON_TARGET:-0}" == 1 ]]; then
+  build_command+=(--host "ssh://$target")
+fi
+"${build_command[@]}" info >/dev/null
+"${build_command[@]}" buildx version >/dev/null
 
 platform="${DEPLOY_PLATFORM:-}"
 if [[ -z "$platform" ]]; then
@@ -112,16 +118,24 @@ if [[ -z "$platform" ]]; then
 fi
 
 printf '构建 Server 镜像（%s）\n' "$platform"
-docker buildx build --load --platform "$platform" \
+build_args=()
+if [[ -n "${DEPLOY_DEBIAN_MIRROR:-}" ]]; then
+  [[ "$DEPLOY_DEBIAN_MIRROR" =~ ^https?://[A-Za-z0-9.-]+(:[0-9]+)?$ ]] || fail 'DEPLOY_DEBIAN_MIRROR 无效'
+  build_args+=(--build-arg "DEBIAN_MIRROR=$DEPLOY_DEBIAN_MIRROR")
+fi
+"${build_command[@]}" buildx build --load --platform "$platform" \
+  ${build_args[@]+"${build_args[@]}"} \
   --file "$root_dir/apps/server/Dockerfile" --tag "$image" "$root_dir"
 
-archive="$tmp_dir/image.tar.gz"
-docker save "$image" | gzip -1 > "$archive"
-printf '上传并导入远端镜像\n'
-if command -v pv >/dev/null 2>&1; then
-  pv "$archive" | remote 'gzip -dc | docker load'
-else
-  remote 'gzip -dc | docker load' < "$archive"
+if [[ "${DEPLOY_BUILD_ON_TARGET:-0}" != 1 ]]; then
+  archive="$tmp_dir/image.tar.gz"
+  docker save "$image" | gzip -1 > "$archive"
+  printf '上传并导入远端镜像\n'
+  if command -v pv >/dev/null 2>&1; then
+    pv "$archive" | remote 'gzip -dc | docker load'
+  else
+    remote 'gzip -dc | docker load' < "$archive"
+  fi
 fi
 
 printf '上传部署配置并等待服务就绪\n'
@@ -138,7 +152,7 @@ tar -C "$tmp_dir" -cf - .env docker-compose.remote.yml | remote "
   flock 9
   mv \"\$stage/.env\" .env
   mv \"\$stage/docker-compose.remote.yml\" docker-compose.remote.yml
-  unset DATACUBE_SERVER_IMAGE DATACUBE_PORT SEED_ADMIN_PASSWORD SEED_MEMBER_PASSWORD SEED_ADMIN_EMAIL SEED_MEMBER_EMAIL SESSION_IDLE_MINUTES SESSION_MAX_DAYS SESSION_COOKIE_SECURE CHART_DATA_CONNECTIONS CHART_DATA_SOURCES
+  unset DATACUBE_SERVER_IMAGE DATACUBE_PORT SEED_ADMIN_PASSWORD SEED_MEMBER_PASSWORD SEED_ADMIN_EMAIL SEED_MEMBER_EMAIL SESSION_IDLE_MINUTES SESSION_MAX_DAYS SESSION_COOKIE_SECURE CHART_DATA_CONNECTIONS CHART_DATA_SOURCES DEMO_LOGIN_ENABLED DEMO_LOGIN_PASSWORD
   compose() { docker compose --env-file .env -f docker-compose.remote.yml \"\$@\"; }
   if ! compose up -d --wait --wait-timeout 300; then
     compose ps -a || true

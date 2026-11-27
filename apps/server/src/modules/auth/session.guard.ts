@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
+import { demoEmail } from './demo-login';
 import { digestToken } from './password';
 import {
   AuthenticatedRequest,
@@ -34,6 +35,7 @@ function reject(code: string, message: string): never {
 export class SessionGuard implements CanActivate {
   private readonly idle: number;
   private readonly allowedOrigins: string[];
+  private readonly demoEnabled: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -41,6 +43,7 @@ export class SessionGuard implements CanActivate {
     config: ConfigService,
   ) {
     this.idle = idleMs(config);
+    this.demoEnabled = config.get('DEMO_LOGIN_ENABLED') === 'true';
     this.allowedOrigins = (config.get<string>('CORS_ORIGIN') ?? 'http://localhost:5173')
       .split(',')
       .map((origin) => origin.trim())
@@ -74,6 +77,9 @@ export class SessionGuard implements CanActivate {
       include: { user: true },
     });
     if (!session || session.revokedAt) reject('SESSION_INVALID', '会话已失效，请重新登录。');
+    if (session.user.email === demoEmail && !this.demoEnabled) {
+      reject('SESSION_INVALID', '演示登录未启用。');
+    }
     if (session.expiresAt.getTime() <= now) {
       await this.prisma.session.update({
         where: { id: session.id },

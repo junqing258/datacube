@@ -28,6 +28,12 @@ export function login(email: string, password: string) {
     .then((response) => response.data);
 }
 
+export function getDemoLogin() {
+  return api
+    .get<{ credentials: { email: string; password: string } | null }>('/auth/demo-login')
+    .then(({ data }) => data.credentials);
+}
+
 export function getSession() {
   return api.get<SessionPayload>('/auth/session').then((response) => response.data);
 }

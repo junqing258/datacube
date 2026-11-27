@@ -2,7 +2,8 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import { DatabaseSync } from 'node:sqlite';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { hashPassword } from '../src/modules/auth/password';
+import { demoEmail, demoLoginConfig } from '../src/modules/auth/demo-login';
+import { hashPassword, verifyPassword } from '../src/modules/auth/password';
 
 const prisma = new PrismaClient();
 
@@ -82,6 +83,10 @@ function dataType(type: string | undefined) {
 async function seedIdentity() {
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? 'admin@datacube.local').toLowerCase();
   const memberEmail = (process.env.SEED_MEMBER_EMAIL ?? 'member@datacube.local').toLowerCase();
+  if (adminEmail === demoEmail || memberEmail === demoEmail) {
+    throw new Error('demo@datacube.local 已保留给演示账号。');
+  }
+  const demoLogin = demoLoginConfig();
   const adminPassword = password('SEED_ADMIN_PASSWORD', 'admin-datacube-2026');
   const memberPassword = password('SEED_MEMBER_PASSWORD', 'member-datacube-2026');
 
@@ -98,17 +103,26 @@ async function seedIdentity() {
   const admin = await upsertUser(adminEmail, '林晓', 'admin', adminPassword);
   const member = await upsertUser(memberEmail, '陈默', 'member', memberPassword);
 
-  for (const [user, role] of [
-    [admin, 'admin'],
-    [member, 'member'],
-  ] as const) {
+  const users = [admin, member];
+  if (demoLogin) {
+    const demo = await upsertUser(demoLogin.email, '演示成员', 'member', demoLogin.password);
+    if (!(await verifyPassword(demoLogin.password, demo.password))) {
+      await prisma.user.update({
+        where: { id: demo.id },
+        data: { password: await hashPassword(demoLogin.password) },
+      });
+    }
+    users.push(demo);
+  }
+
+  for (const { id: userId, role } of users) {
     await prisma.spaceMember.upsert({
-      where: { spaceId_userId: { spaceId: space.id, userId: user.id } },
-      create: { spaceId: space.id, userId: user.id, role },
+      where: { spaceId_userId: { spaceId: space.id, userId } },
+      create: { spaceId: space.id, userId, role },
       update: { role, disabledAt: null },
     });
   }
-  return { space, admin, member };
+  return { space, admin, member, users };
 }
 
 async function upsertUser(email: string, name: string, role: string, initialPassword: string) {
@@ -303,7 +317,7 @@ const boardSeeds = [
   },
 ];
 
-async function seedDashboards(spaceId: string, adminId: string, memberId: string) {
+async function seedDashboards(spaceId: string, adminId: string, userIds: string[]) {
   const boards = new Map<string, string>();
   for (const seed of boardSeeds) {
     let existing = await prisma.dashboard.findFirst({ where: { spaceId, name: seed.name } });
@@ -332,7 +346,7 @@ async function seedDashboards(spaceId: string, adminId: string, memberId: string
         },
       }));
     boards.set(seed.kind, dashboard.id);
-    for (const userId of [adminId, memberId]) {
+    for (const userId of userIds) {
       await prisma.dashboardFavorite.upsert({
         where: { spaceId_userId_dashboardId: { spaceId, userId, dashboardId: dashboard.id } },
         create: { spaceId, userId, dashboardId: dashboard.id },
@@ -807,9 +821,10 @@ async function attachCard(
 
 async function main() {
   console.log('Seeding DataCube database...');
-  const { space, admin, member } = await seedIdentity();
-  const datasets = await seedSources(space.id, [admin.id, member.id]);
-  const boards = await seedDashboards(space.id, admin.id, member.id);
+  const { space, admin, member, users } = await seedIdentity();
+  const userIds = users.map(({ id }) => id);
+  const datasets = await seedSources(space.id, userIds);
+  const boards = await seedDashboards(space.id, admin.id, userIds);
   const salesDataset =
     datasets.get('sales_daily') ??
     [...datasets.entries()].find(([key]) => !boardDatasetGrains.has(key))?.[1];

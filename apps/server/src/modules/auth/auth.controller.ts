@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   HttpCode,
   Post,
   Req,
@@ -10,6 +11,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
+import { demoLoginConfig } from './demo-login';
 import { CurrentSession, Public, SESSION_COOKIE, type RequestSession } from './session.types';
 
 function text(value: unknown, field: string, max = 200) {
@@ -31,6 +33,13 @@ export class AuthController {
       maxAge: this.auth.cookieMaxAge,
       path: '/',
     });
+  }
+
+  @Public()
+  @Get('demo-login')
+  @Header('Cache-Control', 'no-store')
+  demoLogin() {
+    return { credentials: demoLoginConfig() };
   }
 
   @Public()

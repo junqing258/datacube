@@ -93,53 +93,31 @@ export function HomePage() {
     : favorite.isPending
       ? '保存收藏…'
       : '';
-  const processingBoard = active.find((board) => board.kind === 'processing');
 
   return (
     <>
-      <div
-        className={`grid gap-4 ${processingBoard ? 'min-[1100px]:grid-cols-[minmax(0,1fr)_minmax(280px,0.36fr)]' : ''}`}
-      >
-        <section className="flex min-w-0 flex-col justify-center bg-surface-warm p-[clamp(24px,4vw,48px)]">
-          <h1 className="font-display text-[clamp(36px,4.6vw,56px)] font-normal leading-[1.2] after:mt-4 after:block after:h-1 after:w-10 after:bg-gold">
-            经营总览
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-body">
-            查看电商销售、多仓库存、加工损耗和直播经营。
+      <section className="flex min-w-0 flex-col justify-center bg-surface-warm p-[clamp(24px,4vw,48px)]">
+        <h1 className="font-display text-[clamp(36px,4.6vw,56px)] font-normal leading-[1.2] after:mt-4 after:block after:h-1 after:w-10 after:bg-gold">
+          经营总览
+        </h1>
+        <p className="mt-3 text-base leading-relaxed text-body">
+          查看电商销售、多仓库存、加工损耗和直播经营。
+        </p>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <Link to="/dashboards?new=1" className="dc-btn dc-btn-primary">
+            <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
+            新建看板
+          </Link>
+          <Link to="/dashboards" className="dc-btn">
+            所有看板 <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        {status && (
+          <p role="status" className="mt-3 text-sm text-muted">
+            {status}
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Link to="/dashboards?new=1" className="dc-btn dc-btn-primary">
-              <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
-              新建看板
-            </Link>
-            <Link to="/dashboards" className="dc-btn">
-              所有看板 <span aria-hidden="true">→</span>
-            </Link>
-          </div>
-          {status && (
-            <p role="status" className="mt-3 text-sm text-muted">
-              {status}
-            </p>
-          )}
-        </section>
-        {processingBoard && (
-          <section className="dc-page-card flex flex-col items-start justify-center gap-2.5 bg-surface-tint p-6">
-            <span className="dc-tag bg-white text-muted">加工主题</span>
-            <h2 className="text-[17px] font-medium leading-snug">加工损耗与入库核对</h2>
-            <p className="text-[13px] leading-relaxed text-body">
-              {processingBoard.cards.length
-                ? '查看加工损耗率，按批次核对合格产出与已确认入库。'
-                : '加工看板暂无图表。'}
-            </p>
-            <Link
-              to={`/dashboards?board=${processingBoard.id}`}
-              className="dc-btn-text min-h-[34px]"
-            >
-              打开加工看板 →
-            </Link>
-          </section>
         )}
-      </div>
+      </section>
 
       {variant === 'B' && (
         <section className="mt-7">
