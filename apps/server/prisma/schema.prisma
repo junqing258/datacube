@@ -17,6 +17,24 @@ model User {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   memberships SpaceMember[]
+  sessions    Session[]
+}
+
+// Browser session. Only a digest of the bearer token is stored.
+model Session {
+  id              String    @id @default(cuid())
+  userId          String
+  spaceId         String?
+  digest          String    @unique
+  createdAt       DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  expiresAt       DateTime
+  revokedAt       DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
 }
 
 model Space {
@@ -97,6 +115,7 @@ model Dataset {
   connection     DataConnection         @relation(fields: [spaceId, connectionId], references: [spaceId, id], onDelete: Restrict)
   fields         DatasetField[]
   grants         DatasetGrant[]
+  bindings       QueryDatasetBinding[]
   metrics        Metric[]
   queries        QueryDefinition[]
   joinsFrom      DatasetJoin[]          @relation("JoinFrom")
@@ -239,11 +258,26 @@ model QueryDefinition {
   spec      String // JSON, template without credentials
   createdAt DateTime @default(now())
 
-  dataset    Dataset          @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+  dataset    Dataset               @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
   charts     Chart[]
   executions QueryExecution[]
+  bindings   QueryDatasetBinding[]
 
   @@unique([spaceId, id])
+  @@index([spaceId, datasetId])
+}
+
+// Datasets actually read by a query version. Aliases match script bindings.
+model QueryDatasetBinding {
+  spaceId   String
+  queryId   String
+  alias     String
+  datasetId String
+
+  query   QueryDefinition @relation(fields: [spaceId, queryId], references: [spaceId, id], onDelete: Cascade)
+  dataset Dataset         @relation(fields: [spaceId, datasetId], references: [spaceId, id], onDelete: Restrict)
+
+  @@id([spaceId, queryId, alias])
   @@index([spaceId, datasetId])
 }
 
@@ -261,8 +295,10 @@ model Chart {
 
   query     QueryDefinition           @relation(fields: [spaceId, queryId], references: [spaceId, id], onDelete: Restrict)
   creator   SpaceMember               @relation(fields: [spaceId, createdById], references: [spaceId, userId], onDelete: Restrict)
-  knowledge ChartKnowledgeReference[]
-  cards     DashboardCard[]
+  knowledge     ChartKnowledgeReference[]
+  cards         DashboardCard[]
+  executions    QueryExecution[]
+  latestResults ChartLatestResult[]
 
   @@unique([spaceId, id])
   @@index([spaceId, queryId])
@@ -287,6 +323,7 @@ model Dashboard {
   createdById   String
   name          String
   description   String?
+  kind          String    @default("custom") // sales | inventory | processing | channel | custom
   origin        String    @default("web") // web | api | mcp
   visibility    String    @default("private") // private | space
   publishedAt   DateTime?
@@ -314,13 +351,14 @@ model DashboardCard {
   dashboardId   String
   chartId       String
   titleOverride String?
-  layout        String // JSON, coordinates and dimensions
+  layout        String  @default("{}") // JSON, coordinates and dimensions
+  position      Int     @default(0)
   filterMapping String? // JSON, dashboard-to-chart filter bindings
 
   dashboard Dashboard @relation(fields: [spaceId, dashboardId], references: [spaceId, id], onDelete: Cascade)
   chart     Chart     @relation(fields: [spaceId, chartId], references: [spaceId, id], onDelete: Restrict)
 
-  @@index([spaceId, dashboardId])
+  @@index([spaceId, dashboardId, position])
   @@index([spaceId, chartId])
 }
 
@@ -384,6 +422,7 @@ model QueryExecution {
   id              String    @id @default(cuid())
   spaceId         String
   queryId         String
+  chartId         String?
   userId          String
   apiKeyId        String?
   origin          String
@@ -399,14 +438,56 @@ model QueryExecution {
   startedAt       DateTime?
   completedAt     DateTime?
 
-  query  QueryDefinition @relation(fields: [spaceId, queryId], references: [spaceId, id], onDelete: Restrict)
-  actor  SpaceMember     @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Restrict)
-  apiKey ApiKey?         @relation(fields: [spaceId, userId, apiKeyId], references: [spaceId, userId, id], onDelete: Restrict)
+  query         QueryDefinition     @relation(fields: [spaceId, queryId], references: [spaceId, id], onDelete: Restrict)
+  chart         Chart?              @relation(fields: [spaceId, chartId], references: [spaceId, id], onDelete: Restrict)
+  actor         SpaceMember         @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Restrict)
+  apiKey        ApiKey?             @relation(fields: [spaceId, userId, apiKeyId], references: [spaceId, userId, id], onDelete: Restrict)
+  result        QueryResult?
+  latestResults ChartLatestResult[]
 
+  @@unique([spaceId, id])
   @@index([status, createdAt])
   @@index([spaceId, queryId, createdAt])
+  @@index([spaceId, chartId, createdAt])
   @@index([spaceId, userId, apiKeyId, createdAt])
   @@index([resultExpiresAt])
+}
+
+// Result payload stored separately from the execution record so it can expire.
+model QueryResult {
+  id         String   @id @default(cuid())
+  spaceId    String
+  executionId String
+  columns    String // JSON array of column names
+  rows       String // JSON array of rows
+  rowCount   Int
+  sizeBytes  Int
+  truncated  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  execution QueryExecution @relation(fields: [spaceId, executionId], references: [spaceId, id], onDelete: Cascade)
+
+  @@unique([spaceId, executionId])
+  @@index([spaceId, expiresAt])
+}
+
+// Latest successful execution for a chart, normalized parameters and scope.
+model ChartLatestResult {
+  spaceId         String
+  chartId         String
+  queryId         String
+  parameterDigest String
+  scopeDigest     String
+  executionId     String
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
+
+  chart     Chart          @relation(fields: [spaceId, chartId], references: [spaceId, id], onDelete: Cascade)
+  execution QueryExecution @relation(fields: [spaceId, executionId], references: [spaceId, id], onDelete: Cascade)
+
+  @@id([spaceId, chartId, queryId, parameterDigest, scopeDigest])
+  @@index([spaceId, chartId])
 }
 
 model AuditEvent {

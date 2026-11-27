@@ -1,7 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ChartDataController } from './modules/chart-data/chart-data.controller';
-import { ChartDataService } from './modules/chart-data/chart-data.service';
+import { AuthModule } from './modules/auth/auth.module';
+import { ChartDataModule } from './modules/chart-data/chart-data.module';
+import { ChartsModule } from './modules/charts/charts.module';
+import { DashboardsModule } from './modules/dashboards/dashboards.module';
+import { DatasetsModule } from './modules/datasets/datasets.module';
+import { ExecutionsModule } from './modules/executions/executions.module';
 import { HealthModule } from './modules/health/health.module';
 import { PrismaModule } from './prisma/prisma.module';
 
@@ -13,9 +17,13 @@ import { PrismaModule } from './prisma/prisma.module';
       envFilePath: ['.env.local', '.env'],
     }),
     PrismaModule,
+    AuthModule,
     HealthModule,
+    DatasetsModule,
+    ChartDataModule,
+    ChartsModule,
+    DashboardsModule,
+    ExecutionsModule,
   ],
-  controllers: [ChartDataController],
-  providers: [ChartDataService],
 })
 export class AppModule {}

@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Header, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Get, Header, Post } from '@nestjs/common';
 import { ChartDataService } from './chart-data.service';
+import { CurrentSession, CurrentSpace, type RequestSession } from '../auth/session.types';
 
 @Controller('chart-data')
 export class ChartDataController {
@@ -7,15 +8,17 @@ export class ChartDataController {
 
   @Get('sources')
   @Header('Cache-Control', 'no-store')
-  sources(@Headers('authorization') authorization?: string) {
-    this.chartData.authorize(authorization);
-    return this.chartData.list();
+  sources(@CurrentSpace() spaceId: string, @CurrentSession() session: RequestSession) {
+    return this.chartData.list(spaceId, session.userId, session.role);
   }
 
   @Post('read')
   @Header('Cache-Control', 'no-store')
-  read(@Body() body: unknown, @Headers('authorization') authorization?: string) {
-    this.chartData.authorize(authorization);
-    return this.chartData.read(body);
+  read(
+    @Body() body: unknown,
+    @CurrentSpace() spaceId: string,
+    @CurrentSession() session: RequestSession,
+  ) {
+    return this.chartData.read(spaceId, session.userId, session.role, body);
   }
 }

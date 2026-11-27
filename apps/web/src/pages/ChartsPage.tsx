@@ -1,32 +1,48 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { BoardChart } from '../components/BoardChart';
 import { DataTable, Dialog, PageHeading } from '../components/PageParts';
-import { chartKinds, type CustomChart } from '../data/customCharts';
-import { type Board } from '../data/demo';
-import { BoardChart } from './BoardCharts';
+import { chartKinds } from '../data/customCharts';
+import { apiMessage } from '../services/api';
+import { getSession } from '../services/auth';
+import { listCharts, updateChart, type ChartRecord } from '../services/platform';
 
-interface Props {
-  charts: CustomChart[];
-  boards: Board[];
-  deleteChart: (id: string) => void;
-  refreshChart: (chart: CustomChart) => void;
-}
-
-export function ChartsPage({ charts, boards, deleteChart, refreshChart }: Props) {
+export function ChartsPage() {
+  const queryClient = useQueryClient();
   const [query, setQuery] = useSearchParams();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const { state } = useLocation();
-  const viewing = charts.find(({ id }) => id === query.get('view'));
-  const removing = charts.find(({ id }) => id === query.get('delete'));
+  const charts = useQuery({ queryKey: ['charts', 'all'], queryFn: () => listCharts(true) });
+  const session = useQuery({ queryKey: ['session'], queryFn: getSession });
+  const data = charts.data ?? [];
+  const canMutate = (chart: ChartRecord) =>
+    session.data?.space?.role === 'admin' || chart.createdById === session.data?.user.id;
+  const viewing = data.find(({ id }) => id === query.get('view'));
+  const archiving = data.find(({ id }) => id === query.get('archive'));
   const term = search.trim().toLowerCase();
-  const visible = charts.filter((chart) => chart.name.toLowerCase().includes(term));
-  const referenceCount = (id: string) => boards.filter((board) => board.cards.includes(id)).length;
+  const visible = data.filter((chart) => chart.name.toLowerCase().includes(term));
   const close = () => setQuery({}, { replace: true });
+
+  const archive = useMutation({
+    mutationFn: ({ chart, archived }: { chart: ChartRecord; archived: boolean }) =>
+      updateChart(chart.id, { archived }),
+    onSuccess: (_updated, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['charts'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboards'] });
+      setStatus(variables.archived ? '图表已归档' : '图表已恢复');
+      close();
+    },
+    onError: (error) => setStatus(apiMessage(error)),
+  });
 
   return (
     <>
-      <PageHeading title="图表管理" description={`${charts.length} 个自定义图表`}>
+      <PageHeading
+        title="图表管理"
+        description={`${data.filter((chart) => !chart.archived).length} 个有效图表`}
+      >
         <Link to="/charts/new" className="dc-btn dc-btn-primary">
           ＋ 新建图表
         </Link>
@@ -35,7 +51,7 @@ export function ChartsPage({ charts, boards, deleteChart, refreshChart }: Props)
         {status || (typeof state?.message === 'string' ? state.message : '')}
       </p>
       <section className="dc-page-card mt-5" aria-label="图表列表">
-        {charts.length > 0 && (
+        {data.length > 0 && (
           <input
             type="search"
             className="dc-control mb-4 sm:max-w-72"
@@ -45,14 +61,19 @@ export function ChartsPage({ charts, boards, deleteChart, refreshChart }: Props)
             onChange={(event) => setSearch(event.target.value)}
           />
         )}
-        {visible.length ? (
+        {charts.isLoading ? (
+          <p className="text-muted">正在加载图表…</p>
+        ) : visible.length ? (
           <DataTable
             headers={['图表名称', '类型', '数据来源', '引用看板', '操作']}
             rows={visible.map((chart) => [
-              <strong>{chart.name}</strong>,
-              chartKinds[chart.kind],
+              <strong>
+                {chart.name}
+                {chart.archived && <span className="dc-tag ml-2 text-muted">已归档</span>}
+              </strong>,
+              chartKinds[chart.kind] ?? chart.kind,
               chart.dataset,
-              `${referenceCount(chart.id)} 个`,
+              `${chart.referencedBy} 个`,
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -61,40 +82,50 @@ export function ChartsPage({ charts, boards, deleteChart, refreshChart }: Props)
                 >
                   查看
                 </button>
-                <Link
-                  to={`/charts/${encodeURIComponent(chart.id)}/edit`}
-                  className="dc-btn-text"
-                  aria-label={`编辑 ${chart.name}`}
-                >
-                  编辑
-                </Link>
-                <button
-                  type="button"
-                  className="dc-btn-text text-down"
-                  onClick={() => setQuery({ delete: chart.id })}
-                >
-                  删除
-                </button>
+                {canMutate(chart) ? (
+                  <>
+                    <Link
+                      to={`/charts/${encodeURIComponent(chart.id)}/edit`}
+                      className="dc-btn-text"
+                      aria-label={`编辑 ${chart.name}`}
+                    >
+                      编辑
+                    </Link>
+                    <button
+                      type="button"
+                      className="dc-btn-text text-down"
+                      onClick={() => setQuery({ archive: chart.id })}
+                    >
+                      {chart.archived ? '恢复' : '归档'}
+                    </button>
+                  </>
+                ) : (
+                  <span className="text-muted">只读</span>
+                )}
               </div>,
             ])}
           />
         ) : (
-          <p className="text-muted">{charts.length ? '没有匹配的图表。' : '暂无自定义图表。'}</p>
+          <p className="text-muted">{data.length ? '没有匹配的图表。' : '暂无图表。'}</p>
         )}
       </section>
       {viewing && (
-        <Dialog title="图表预览" className="dc-sheet" onClose={close}>
+        <Dialog title="图表预览" className="dc-dialog-wide" onClose={close}>
           <div className="mt-4">
-            <BoardChart id={viewing.id} customChart={viewing} onRefreshScript={refreshChart} />
+            <BoardChart chart={viewing} />
           </div>
         </Dialog>
       )}
-      {removing && (
-        <Dialog title="删除图表" onClose={close}>
+      {archiving && (
+        <Dialog title={archiving.archived ? '恢复图表' : '归档图表'} onClose={close}>
           <p className="my-4">
-            确定删除「{removing.name}」？
-            {referenceCount(removing.id) > 0 &&
-              `此图表将从引用它的 ${referenceCount(removing.id)} 个看板中移除。`}
+            {archiving.archived
+              ? `恢复「${archiving.name}」后，引用它的看板会重新读取结果。`
+              : `确定归档「${archiving.name}」？${
+                  archiving.referencedBy > 0
+                    ? `引用它的 ${archiving.referencedBy} 个看板将显示图表已归档。`
+                    : ''
+                }`}
           </p>
           <div className="flex justify-end gap-2">
             <button type="button" className="dc-btn" onClick={close}>
@@ -102,14 +133,11 @@ export function ChartsPage({ charts, boards, deleteChart, refreshChart }: Props)
             </button>
             <button
               type="button"
-              className="dc-btn text-down"
-              onClick={() => {
-                deleteChart(removing.id);
-                setStatus('图表已删除');
-                close();
-              }}
+              className="dc-btn"
+              disabled={archive.isPending}
+              onClick={() => archive.mutate({ chart: archiving, archived: !archiving.archived })}
             >
-              确认删除
+              {archive.isPending ? '保存中…' : archiving.archived ? '确认恢复' : '确认归档'}
             </button>
           </div>
         </Dialog>

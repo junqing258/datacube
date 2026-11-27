@@ -1,30 +1,100 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
-import { type Board } from '../data/demo';
+import { useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { BoardCard } from '../components/BoardCard';
+import { BoardChart } from '../components/BoardChart';
 import { DataTable } from '../components/PageParts';
-import { BoardChart } from './BoardCharts';
+import { apiMessage } from '../services/api';
+import {
+  listDashboards,
+  runChartExecution,
+  setDashboardFavorite,
+  type DashboardRecord,
+} from '../services/platform';
 
-const PROCESSING_ALERT = {
-  warehouse: '二号仓',
-  rate: '11.0%',
-  batch: 'JG-1125-02',
-  gap: 32,
-};
+const formatAmount = new Intl.NumberFormat('zh-CN', {
+  style: 'currency',
+  currency: 'CNY',
+  maximumFractionDigits: 0,
+});
 
-export function HomePage({
-  boards,
-  updateBoard,
-}: {
-  boards: Board[];
-  updateBoard: (id: string, changes: Partial<Board>) => void;
-}) {
+function SalesSummary({ chartId }: { chartId?: string }) {
+  const result = useQuery({
+    queryKey: ['home-sales-summary', chartId],
+    queryFn: () => runChartExecution(chartId!),
+    enabled: Boolean(chartId),
+    staleTime: 5 * 60_000,
+  });
+  if (!chartId) return <p className="text-muted">销售看板尚未绑定真实查询。</p>;
+  if (result.isLoading) return <p className="text-muted">正在读取销售数据…</p>;
+  if (result.isError) {
+    return (
+      <p role="alert" className="text-sm text-down">
+        {result.error instanceof Error ? result.error.message : '销售数据读取失败。'}
+      </p>
+    );
+  }
+  const rows = result.data?.rows ?? [];
+  const values = rows
+    .map((row) => row.value)
+    .filter((value): value is number => typeof value === 'number');
+  if (!values.length) return <p className="text-muted">当前窗口暂无销售数据。</p>;
+  const total = values.reduce((sum, value) => sum + value, 0);
+  const average = total / values.length;
+  const best = Math.max(...values);
+  const last = String(rows.at(-1)?.label ?? '—');
+  const tiles = [
+    ['净销售额', formatAmount.format(total), `${values.length} 天合计`],
+    ['日均净销售额', formatAmount.format(average), '按有数据日期'],
+    ['最高单日', formatAmount.format(best), '窗口内峰值'],
+    ['统计截止', last, `共 ${result.data?.rowCount ?? values.length} 天`],
+  ];
+  return (
+    <div className="mb-4 grid gap-4 sm:grid-cols-2 min-[1150px]:grid-cols-4">
+      {tiles.map(([label, value, note]) => (
+        <div key={label} className="dc-page-card">
+          <h3 className="text-muted">{label}</h3>
+          <p className="py-2 font-mono text-2xl font-semibold">{value}</p>
+          <p className="text-sm text-muted">{note}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function HomePage() {
   const [query] = useSearchParams();
+  const queryClient = useQueryClient();
   const variant = query.get('variant');
-  const active = boards.filter((board) => !board.archived);
-  const visible = variant === 'B' ? active : active.filter((board) => board.favorite);
+  const dashboards = useQuery({ queryKey: ['dashboards'], queryFn: listDashboards });
+  const favorite = useMutation({
+    mutationFn: ({ board }: { board: DashboardRecord }) =>
+      setDashboardFavorite(board.id, !board.favorite),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['dashboards'] }),
+  });
 
-  const showAlert = boards.some((board) => board.id === 'processing' && !board.archived);
+  if (dashboards.isLoading) return <p className="text-muted">正在加载看板…</p>;
+  if (dashboards.isError) {
+    return (
+      <p role="alert" className="text-down">
+        {apiMessage(dashboards.error)}
+      </p>
+    );
+  }
+
+  const all = dashboards.data ?? [];
+  const active = all.filter((board) => !board.archived);
+  const visible = variant === 'B' ? active : active.filter((board) => board.favorite);
+  const salesBoard = active.find((board) => board.kind === 'sales');
+  const salesChart = salesBoard?.cards.find((card) => card.chart.source === 'sql');
+  const status = favorite.isError
+    ? apiMessage(favorite.error)
+    : favorite.isPending
+      ? '保存收藏…'
+      : '';
+  const showAlert = active.some((board) => board.kind === 'processing');
+
   return (
     <>
       <div
@@ -46,19 +116,24 @@ export function HomePage({
               所有看板 <span aria-hidden="true">→</span>
             </Link>
           </div>
+          {status && (
+            <p role="status" className="mt-3 text-sm text-muted">
+              {status}
+            </p>
+          )}
         </section>
         {showAlert && (
           <section className="dc-page-card flex flex-col items-start justify-center gap-2.5 bg-surface-tint p-6">
-            <span className="dc-tag bg-white text-down">待复核 · {PROCESSING_ALERT.warehouse}</span>
-            <div className="font-mono text-[41px] font-medium leading-none tabular-nums">
-              {PROCESSING_ALERT.rate}
-            </div>
-            <h2 className="text-[17px] font-medium leading-snug">加工损耗率</h2>
+            <span className="dc-tag bg-white text-muted">加工主题</span>
+            <h2 className="text-[17px] font-medium leading-snug">加工损耗与入库核对</h2>
             <p className="text-[13px] leading-relaxed text-body">
-              批次 {PROCESSING_ALERT.batch} · 入库差额 {PROCESSING_ALERT.gap} kg
+              加工批次查询尚未迁入平台。打开看板查看当前配置。
             </p>
-            <Link to="/dashboards?board=processing" className="dc-btn-text min-h-[34px]">
-              打开加工损耗看板 →
+            <Link
+              to={`/dashboards?board=${active.find((board) => board.kind === 'processing')?.id ?? ''}`}
+              className="dc-btn-text min-h-[34px]"
+            >
+              打开加工看板 →
             </Link>
           </section>
         )}
@@ -67,27 +142,16 @@ export function HomePage({
       {variant === 'B' && (
         <section className="mt-7">
           <h2 className="mb-3 text-[21px] font-semibold">销售表现</h2>
-          <div className="mb-4 grid gap-4 sm:grid-cols-2 min-[1150px]:grid-cols-4">
-            {[
-              ['净销售额', '¥ 128.6 万', '8.9%'],
-              ['支付订单数', '8,426', '6.2%'],
-              ['客单价', '¥ 152.6', '2.9%'],
-              ['退款率', '3.8%', '0.3 个百分点'],
-            ].map(([label, value, change]) => (
-              <div key={label} className="dc-page-card">
-                <h3 className="text-muted">{label}</h3>
-                <p className="py-2 font-mono text-2xl font-semibold">{value}</p>
-                <p className="text-sm text-muted">
-                  <span className={label === '退款率' ? 'text-up' : 'text-down'}>↘ {change}</span>{' '}
-                  较上月同期
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="dc-columns">
-            <BoardChart id="sales-trend" boardId="sales" warehouse="" />
-            <BoardChart id="channel-sales" boardId="sales" warehouse="" />
-          </div>
+          <SalesSummary chartId={salesChart?.chartId} />
+          {salesBoard?.cards.length ? (
+            <div className="dc-columns">
+              {salesBoard.cards.map((card) => (
+                <BoardChart key={card.id} chart={card.chart} title={card.title} />
+              ))}
+            </div>
+          ) : (
+            <p className="dc-page-card text-muted">销售看板还没有绑定真实查询。</p>
+          )}
         </section>
       )}
 
@@ -101,7 +165,7 @@ export function HomePage({
                 <Link className="dc-btn-text" to={`/dashboards?board=${board.id}`}>
                   {board.name}
                 </Link>,
-                board.source,
+                board.origin === 'web' ? '手动' : board.origin,
                 `v${board.version}`,
               ])}
             />
@@ -139,7 +203,7 @@ export function HomePage({
                 key={board.id}
                 board={board}
                 copyTo={`/dashboards?copy=${board.id}`}
-                onFavorite={() => updateBoard(board.id, { favorite: !board.favorite })}
+                onFavorite={() => favorite.mutate({ board })}
               />
             ))}
           </div>

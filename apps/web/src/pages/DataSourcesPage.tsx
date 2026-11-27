@@ -1,90 +1,56 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { DataTable, PageHeading } from '../components/PageParts';
-import {
-  connectChartData,
-  listChartDataSources,
-  type ChartDataSource,
-} from '../services/chartData';
+import { apiMessage } from '../services/api';
+import { listDatasets } from '../services/platform';
 
-const connectionKinds = { sqlite: 'SQLite', mysql: 'MySQL', postgresql: 'PostgreSQL' };
+const connectionKinds: Record<string, string> = {
+  sqlite: 'SQLite',
+  mysql: 'MySQL',
+  postgresql: 'PostgreSQL',
+};
 
 export function DataSourcesPage() {
-  const [sources, setSources] = useState<ChartDataSource[]>([]);
-  const [token, setToken] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    const request = new AbortController();
-    listChartDataSources(undefined, request.signal)
-      .then(setSources)
-      .catch((error: unknown) => {
-        if (!request.signal.aborted) {
-          setError(error instanceof Error ? error.message : '无法读取数据源。');
-        }
-      });
-    return () => request.abort();
-  }, []);
-
-  async function connect() {
-    setBusy(true);
-    setError('');
-    try {
-      setSources(await connectChartData(token.trim()));
-      setToken('');
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '无法读取数据源。');
-    } finally {
-      setBusy(false);
-    }
-  }
+  const datasets = useQuery({ queryKey: ['datasets'], queryFn: listDatasets });
 
   return (
     <>
-      <PageHeading title="数据接入" />
-      <section className="dc-page-card mt-5">
-        <form
-          className="flex flex-wrap items-end gap-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (!busy && token.trim()) void connect();
-          }}
-        >
-          <label className="dc-field">
-            图表数据访问令牌
-            <input
-              className="dc-control"
-              type="password"
-              autoComplete="off"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-            />
-          </label>
-          <button className="dc-btn dc-btn-primary" disabled={busy || !token.trim()}>
-            {busy ? '验证中…' : '验证令牌'}
-          </button>
-        </form>
-        {error && (
-          <p role="status" className="mt-3 text-muted">
-            {error}
-          </p>
-        )}
-      </section>
-      {sources.length > 0 && (
+      <PageHeading title="数据接入" description="当前空间已授权的数据集目录" />
+      {datasets.isLoading && <p className="mt-5 text-muted">正在加载数据源…</p>}
+      {datasets.isError && (
+        <p role="alert" className="mt-5 text-down">
+          {apiMessage(datasets.error)}
+        </p>
+      )}
+      {datasets.data && (
         <section className="dc-page-card mt-5" aria-label="已登记数据源">
-          <DataTable
-            headers={['数据源', '类型', '标识', '表或视图', '字段', '日期字段']}
-            rows={sources.map(({ id, name, kind, table, fields, timeField }) => [
-              name,
-              connectionKinds[kind],
-              id,
-              table,
-              fields.join('、'),
-              timeField ?? '—',
-            ])}
-          />
+          {!datasets.data.length && (
+            <p className="text-muted">当前空间尚未登记数据集，请联系管理员接入业务库。</p>
+          )}
+          {datasets.data.length > 0 && (
+            <DataTable
+              headers={['数据集', '数据集 ID', '连接类型', '表或视图', '字段', '日期字段']}
+              rows={datasets.data.map(({ id, key, name, connection, table, fields, timeField }) => [
+                <div>
+                  <strong>{name}</strong>
+                  <p className="text-muted">{key}</p>
+                </div>,
+                <code className="text-xs">{id}</code>,
+                connectionKinds[connection.kind] ?? connection.kind,
+                <code className="text-xs">{table}</code>,
+                fields.join('、'),
+                timeField ?? '—',
+              ])}
+            />
+          )}
         </section>
       )}
+      <section className="dc-page-card mt-5">
+        <h2>连接与凭据</h2>
+        <p className="mt-2 text-muted">
+          连接配置和凭据由服务端环境变量登记，页面不展示数据库地址。数据读取按空间成员与数据集授权校验；
+          SQLite 文件只读打开，MySQL 和 PostgreSQL 使用业务只读账号。
+        </p>
+      </section>
     </>
   );
 }

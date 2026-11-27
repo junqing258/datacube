@@ -31,6 +31,7 @@
     "prisma:migrate": "pnpm --filter datacube-server run prisma:migrate",
     "prisma:studio": "pnpm --filter datacube-server run prisma:studio",
     "prisma:seed": "pnpm --filter datacube-server run prisma:seed",
+    "business:sample": "pnpm --filter datacube-server run business:sample",
     "docker:up": "cd apps/server && docker-compose up -d",
     "docker:down": "cd apps/server && docker-compose down",
     "docker:logs": "cd apps/server && docker-compose logs -f"

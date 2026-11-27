@@ -18,7 +18,7 @@ usage() {
   DEPLOY_IMAGE_TAG     镜像标签，默认 Git 短 SHA 加 UTC 时间
   DEPLOY_DRY_RUN=1     仅校验配置，无需连接远端或 Docker Engine
 
-应用配置 DATACUBE_PORT、JWT_SECRET 和 JWT_EXPIRES_IN 见 .env.deploy.example。
+应用配置 DATACUBE_PORT、SEED_*、SESSION_* 和业务数据目录见 .env.deploy.example。
 HELP
 }
 
@@ -85,17 +85,12 @@ printf '\nDATACUBE_SERVER_IMAGE=%s\n' "$image" >> "$env_file"
 
 # 使用部署文件里的值进行校验，避免本地导出的应用变量掩盖缺项。
 compose_config() (
-  unset DATACUBE_SERVER_IMAGE DATACUBE_PORT JWT_SECRET JWT_EXPIRES_IN
+  unset DATACUBE_SERVER_IMAGE DATACUBE_PORT SEED_ADMIN_PASSWORD SEED_MEMBER_PASSWORD \
+    SEED_ADMIN_EMAIL SEED_MEMBER_EMAIL SESSION_IDLE_MINUTES SESSION_MAX_DAYS \
+    SESSION_COOKIE_SECURE CHART_DATA_CONNECTIONS CHART_DATA_SOURCES
   docker compose --env-file "$env_file" -f "$compose_file" config "$@"
 )
 compose_config --quiet
-jwt_secret="$(compose_config --format json | node -e '
-  const fs = require("node:fs");
-  const config = JSON.parse(fs.readFileSync(0, "utf8"));
-  process.stdout.write(config.services.server.environment.JWT_SECRET);
-')"
-[[ "$jwt_secret" != change-me-in-production ]] || fail '请在部署配置中替换默认 JWT_SECRET'
-unset jwt_secret
 
 printf 'SSH 目标：%s\n远端目录：%s\nServer 镜像：%s\n' "$target" "$remote_dir" "$image"
 if [[ "${DEPLOY_DRY_RUN:-0}" == 1 ]]; then
@@ -143,7 +138,7 @@ tar -C "$tmp_dir" -cf - .env docker-compose.remote.yml | remote "
   flock 9
   mv \"\$stage/.env\" .env
   mv \"\$stage/docker-compose.remote.yml\" docker-compose.remote.yml
-  unset DATACUBE_SERVER_IMAGE DATACUBE_PORT JWT_SECRET JWT_EXPIRES_IN
+  unset DATACUBE_SERVER_IMAGE DATACUBE_PORT SEED_ADMIN_PASSWORD SEED_MEMBER_PASSWORD SEED_ADMIN_EMAIL SEED_MEMBER_EMAIL SESSION_IDLE_MINUTES SESSION_MAX_DAYS SESSION_COOKIE_SECURE CHART_DATA_CONNECTIONS CHART_DATA_SOURCES
   compose() { docker compose --env-file .env -f docker-compose.remote.yml \"\$@\"; }
   if ! compose up -d --wait --wait-timeout 300; then
     compose ps -a || true

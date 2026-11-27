@@ -1,3 +1,4 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Tabs } from 'radix-ui';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -9,26 +10,157 @@ import {
   parseExtractScript,
   validateTransform,
 } from '../data/chartDefinition';
-import { runChartScript } from '../data/chartScript';
+import { runChartScript, type ScriptDraft } from '../data/chartScript';
 import { chartInput, validateChartPoints, type CustomChart } from '../data/customCharts';
+import { apiMessage } from '../services/api';
 import { listChartDataSources, type ChartDataSource } from '../services/chartData';
+import {
+  createChart,
+  getChart,
+  updateChart,
+  type ChartInput,
+  type ChartRecord,
+  type ChartSpec,
+} from '../services/platform';
 
 const CodeEditor = lazy(() => import('../components/CodeEditor'));
 const fileTabClass =
   'border-b-2 border-transparent px-3 py-2 font-mono text-sm text-muted ' +
   'hover:text-ink data-[state=active]:border-primary data-[state=active]:font-semibold data-[state=active]:text-primary';
 
-export default function ChartEditorPage({
-  charts,
-  onSave,
-}: {
-  charts: CustomChart[];
-  onSave: (chart: CustomChart) => void;
-}) {
+function toEditorChart(record: ChartRecord): CustomChart {
+  const base: CustomChart = {
+    id: record.id,
+    name: record.name,
+    kind: record.kind,
+    dataset: record.dataset,
+    points: [],
+  };
+  const spec = record.spec;
+  if (!spec) return base;
+  if (spec.source === 'sql' && spec.sql) {
+    base.definition = JSON.stringify(
+      {
+        schemaVersion: 1,
+        name: record.name,
+        kind: record.kind,
+        source: 'sql',
+        dataset: record.dataset,
+        dataSource: spec.datasetId,
+      },
+      null,
+      2,
+    );
+    base.codeSource = { source: 'sql', code: spec.sql };
+    return base;
+  }
+  if (spec.source === 'js' && spec.definition && spec.scripts?.extract && spec.scripts.js) {
+    try {
+      const definition = parseChartDefinition(spec.definition);
+      if (definition.source === 'js') {
+        const extract = parseExtractScript(spec.scripts.extract);
+        const draft: ScriptDraft = {
+          code: spec.scripts.js,
+          etl: {
+            code: spec.scripts.extract,
+            config: { extract, load: definition.load, mapping: definition.mapping },
+          },
+          previewWindow: spec.refresh?.previewWindow ?? definition.refresh.previewWindow,
+          refreshWindow: spec.refresh?.refreshWindow ?? definition.refresh.refreshWindow,
+          intervalMinutes: spec.refresh?.intervalMinutes ?? definition.refresh.intervalMinutes,
+        };
+        base.definition = spec.definition;
+        base.script = { draft, status: 'waiting', version: 1 };
+      }
+    } catch {
+      base.definition = spec.definition;
+    }
+  }
+  return base;
+}
+
+function toChartInput(chart: CustomChart): ChartInput {
+  if (!chart.definition) throw new Error('缺少图表定义。');
+  const definition = parseChartDefinition(chart.definition);
+  if (definition.source === 'sql') {
+    const sql = chart.codeSource?.code ?? '';
+    if (!sql.trim()) throw new Error('请填写查询语句。');
+    const window = /:\s*startDay/.test(sql) && /:\s*endDay/.test(sql) ? { days: 30 } : undefined;
+    const spec: ChartSpec = {
+      source: 'sql',
+      datasetId: definition.dataSource,
+      sql,
+      ...(window ? { window } : {}),
+    };
+    return {
+      name: definition.name,
+      display: { kind: definition.kind, dataset: definition.dataset },
+      spec,
+      bindings: [{ alias: 'result', datasetId: definition.dataSource }],
+    };
+  }
+  const draft = chart.script?.draft;
+  if (!draft?.etl) throw new Error('JS 图表须使用当前的 extract / transform 脚本配置。');
+  const datasetId = draft.etl.config.extract.bindings[0]?.dataset;
+  if (!datasetId) throw new Error('JS 图表至少需要一个数据绑定。');
+  const spec: ChartSpec = {
+    source: 'js',
+    datasetId,
+    definition: chart.definition,
+    scripts: { extract: draft.etl.code, js: draft.code },
+    refresh: {
+      previewWindow: draft.previewWindow,
+      refreshWindow: draft.refreshWindow,
+      intervalMinutes: draft.intervalMinutes,
+    },
+  };
+  const bindings = draft.etl.config.extract.bindings.map(({ alias, dataset }) => ({
+    alias,
+    datasetId: dataset,
+  }));
+  return {
+    name: definition.name,
+    display: { kind: definition.kind, dataset: definition.dataset },
+    spec,
+    bindings,
+  };
+}
+
+export default function ChartEditorPage() {
   const { chartId } = useParams();
   const navigate = useNavigate();
-  const chart = charts.find(({ id }) => id === chartId);
+  const queryClient = useQueryClient();
+  const [error, setError] = useState('');
   const title = chartId ? '编辑图表' : '新建图表';
+  const detail = useQuery({
+    queryKey: ['chart', chartId],
+    queryFn: () => getChart(chartId!),
+    enabled: Boolean(chartId),
+  });
+
+  const save = useMutation({
+    mutationFn: (input: ChartInput) =>
+      chartId
+        ? updateChart(chartId, {
+            name: input.name,
+            display: input.display,
+            spec: input.spec,
+            bindings: input.bindings,
+          })
+        : createChart(input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['charts'] });
+      void queryClient.invalidateQueries({ queryKey: ['chart'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboards'] });
+      navigate('/charts', {
+        replace: true,
+        state: { message: chartId ? '图表已保存' : '图表已创建' },
+      });
+    },
+    onError: (failure) => setError(apiMessage(failure)),
+  });
+
+  const editingChart = detail.data ? toEditorChart(detail.data) : undefined;
 
   return (
     <div className="dc-chart-editor grid gap-4">
@@ -38,20 +170,31 @@ export default function ChartEditorPage({
         </Link>
       </PageHeading>
       <section className="dc-page-card p-4 sm:p-5" aria-label={title}>
-        {chartId && !chart ? (
-          <p className="text-muted">找不到该图表，可能已被删除。</p>
+        {chartId && detail.isLoading ? (
+          <p className="text-muted">正在加载图表…</p>
+        ) : chartId && detail.isError ? (
+          <p className="text-muted">{apiMessage(detail.error)}</p>
         ) : (
-          <ChartEditor
-            key={chartId ?? 'new'}
-            editingChart={chart}
-            onSave={(updated) => {
-              onSave(updated);
-              navigate('/charts', {
-                replace: true,
-                state: { message: chart ? '图表已保存' : '图表已创建' },
-              });
-            }}
-          />
+          <>
+            {error && (
+              <p role="alert" className="mb-3 text-sm text-down">
+                {error}
+              </p>
+            )}
+            <ChartEditor
+              key={chartId ?? 'new'}
+              editingChart={editingChart}
+              busy={save.isPending}
+              onSave={(updated) => {
+                setError('');
+                try {
+                  save.mutate(toChartInput(updated));
+                } catch (failure) {
+                  setError(failure instanceof Error ? failure.message : '保存失败。');
+                }
+              }}
+            />
+          </>
         )}
       </section>
     </div>
@@ -61,9 +204,11 @@ export default function ChartEditorPage({
 function ChartEditor({
   editingChart,
   onSave,
+  busy: saving,
 }: {
   editingChart?: CustomChart;
   onSave: (chart: CustomChart) => void;
+  busy?: boolean;
 }) {
   const [files, setFiles] = useState(() => initialChartFiles(editingChart));
   const [busy, setBusy] = useState(false);
@@ -80,7 +225,7 @@ function ChartEditor({
   useEffect(() => () => request.current?.abort(), []);
   useEffect(() => {
     const controller = new AbortController();
-    listChartDataSources(undefined, controller.signal)
+    listChartDataSources(controller.signal)
       .then(setSources)
       .catch(() => {});
     return () => controller.abort();
@@ -315,10 +460,11 @@ function ChartEditor({
         ) : (
           <Tabs.Content value="sql" className="grid min-w-0 gap-2 data-[state=inactive]:hidden">
             <p className="text-sm text-muted">
-              执行一条只读查询，返回 <code>label</code> 和 <code>value</code>。 散点图或地图还需要{' '}
-              {columns}。{' '}
+              执行一条只读查询，返回 <code>label</code> 和 <code>value</code>。日期筛选使用{' '}
+              <code>:startDay</code> 和 <code>:endDay</code> 命名参数；保存后服务端按 30
+              天窗口执行。 散点图或地图还需要 {columns}。{' '}
               <Link to="/data-sources" className="dc-btn-text">
-                查看数据源
+                查看数据源 ID
               </Link>
             </p>
             <Suspense fallback={<p role="status">正在加载编辑器…</p>}>
@@ -348,9 +494,9 @@ function ChartEditor({
           <button
             type="submit"
             className="dc-btn dc-btn-primary max-[400px]:px-2"
-            disabled={busy || !preview}
+            disabled={busy || saving || !preview}
           >
-            {editingChart ? '保存修改' : '创建图表'}
+            {saving ? '保存中…' : editingChart ? '保存修改' : '创建图表'}
           </button>
         </div>
       </div>

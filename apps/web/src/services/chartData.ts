@@ -1,5 +1,4 @@
-import { isAxiosError } from 'axios';
-import { api } from './api';
+import { api, apiMessage } from './api';
 
 type Cell = string | number | boolean | null;
 type Filters = { field: string; values: Exclude<Cell, null>[] }[];
@@ -13,6 +12,7 @@ type ReadRequest = {
 
 export type ChartDataSource = {
   id: string;
+  key: string;
   name: string;
   kind: 'sqlite' | 'mysql' | 'postgresql';
   table: string;
@@ -20,37 +20,37 @@ export type ChartDataSource = {
   timeField?: string;
 };
 
-const tokenKey = 'datacube.chart-data-token';
-
-function headers(token = sessionStorage.getItem(tokenKey) ?? '') {
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 function apiError(error: unknown): never {
-  if (isAxiosError(error)) {
-    const message = error.response?.data?.message;
-    if (typeof message === 'string') throw new Error(message);
-    if (!error.response && error.code !== 'ERR_CANCELED') throw new Error('无法连接图表数据服务。');
-  }
-  throw error;
+  throw new Error(apiMessage(error));
 }
 
-export async function listChartDataSources(token?: string, signal?: AbortSignal) {
+export async function listChartDataSources(signal?: AbortSignal) {
   try {
-    const response = await api.get<ChartDataSource[]>('/chart-data/sources', {
-      headers: headers(token),
-      signal,
-    });
-    return response.data;
+    const response = await api.get<
+      {
+        id: string;
+        key: string;
+        name: string;
+        connection: { kind: string };
+        table: string;
+        fields: string[];
+        timeField?: string;
+      }[]
+    >('/datasets', { signal });
+    return response.data.map(
+      ({ id, key, name, connection, table, fields, timeField }): ChartDataSource => ({
+        id,
+        key,
+        name,
+        kind: connection.kind as ChartDataSource['kind'],
+        table,
+        fields,
+        timeField,
+      }),
+    );
   } catch (error) {
     apiError(error);
   }
-}
-
-export async function connectChartData(token: string) {
-  const sources = await listChartDataSources(token);
-  sessionStorage.setItem(tokenKey, token);
-  return sources;
 }
 
 export async function readChartData(request: ReadRequest, signal?: AbortSignal) {
@@ -58,7 +58,7 @@ export async function readChartData(request: ReadRequest, signal?: AbortSignal) 
     const response = await api.post<{ columns: string[]; rows: Record<string, Cell>[] }>(
       '/chart-data/read',
       request,
-      { headers: headers(), signal },
+      { signal },
     );
     return response.data;
   } catch (error) {
