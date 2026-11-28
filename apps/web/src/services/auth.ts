@@ -22,6 +22,18 @@ export interface SessionPayload {
   idleExpiresAt: string;
 }
 
+export interface ProfilePayload {
+  user: SessionUser & { joinedAt: string };
+  space: SessionSpace | null;
+  spaces: SessionSpace[];
+  session: {
+    signedInAt: string;
+    lastSeenAt: string;
+    expiresAt: string;
+    idleExpiresAt: string;
+  };
+}
+
 export function login(email: string, password: string) {
   return api
     .post<SessionPayload>('/auth/login', { email, password })
@@ -36,6 +48,16 @@ export function getDemoLogin() {
 
 export function getSession() {
   return api.get<SessionPayload>('/auth/session').then((response) => response.data);
+}
+
+export function getProfile() {
+  return api.get<ProfilePayload>('/auth/profile').then((response) => response.data);
+}
+
+export function changePassword(currentPassword: string, newPassword: string) {
+  return api
+    .post<{ ok: boolean }>('/auth/password', { currentPassword, newPassword })
+    .then((response) => response.data);
 }
 
 export function refreshSession() {

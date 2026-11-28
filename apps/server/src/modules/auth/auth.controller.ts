@@ -63,6 +63,12 @@ export class AuthController {
     return this.auth.describe(session.sessionId);
   }
 
+  @Get('profile')
+  @Header('Cache-Control', 'no-store')
+  profile(@CurrentSession() session: RequestSession) {
+    return this.auth.profile(session.sessionId);
+  }
+
   @Public()
   @Post('refresh')
   @HttpCode(200)
@@ -106,6 +112,7 @@ export class AuthController {
     const record = body as Record<string, unknown>;
     return this.auth.changePassword(
       session.userId,
+      session.sessionId,
       typeof record.currentPassword === 'string' ? record.currentPassword : '',
       typeof record.newPassword === 'string' ? record.newPassword : '',
     );

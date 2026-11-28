@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import clsx from 'clsx';
-import { BookOpen, Bot, Cable, ChartNoAxesCombined, Home, LayoutGrid, LogOut } from 'lucide-react';
+import { BookOpen, Bot, Cable, ChartNoAxesCombined, Home, LayoutGrid } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
+import { UserMenu } from '@/components/UserMenu';
 import { getHealth } from '@/services/health';
 import { apiMessage } from '@/services/api';
-import { logout, roleLabels, switchSpace, type SessionPayload } from '@/services/auth';
+import { logout, switchSpace, type SessionPayload } from '@/services/auth';
 
 const NAV_ITEMS = [
   { to: '/', label: '首页', icon: Home, end: true },
@@ -53,7 +54,6 @@ export function AppShell({
       item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
     ) ?? NAV_ITEMS[0];
   const space = session.space!;
-  const role = space.role || session.user.role;
 
   async function changeSpace(spaceId: string) {
     try {
@@ -104,28 +104,7 @@ export function AppShell({
             </NavLink>
           ))}
         </nav>
-        <div className="mt-auto hidden items-center gap-2.5 border-t border-hairline-soft px-2 pt-3.5 min-[701px]:flex">
-          <span className="grid size-9 place-items-center rounded-full bg-primary-soft text-sm font-semibold text-primary">
-            {session.user.name.slice(0, 1)}
-          </span>
-          <div className="min-w-0">
-            <strong className="block truncate text-sm font-[650] leading-tight">
-              {session.user.name}
-            </strong>
-            <small className="block text-xs leading-tight text-muted">
-              {roleLabels[role] ?? role}
-            </small>
-          </div>
-          <button
-            type="button"
-            className="ml-auto grid size-8 place-items-center rounded-full text-muted hover:bg-surface-soft hover:text-ink"
-            aria-label="退出登录"
-            title="退出登录"
-            onClick={signOut}
-          >
-            <LogOut size={15} aria-hidden="true" />
-          </button>
-        </div>
+        <UserMenu session={session} onLogout={signOut} />
       </aside>
       <div className="dc-workspace">
         <header className="dc-header">

@@ -18,6 +18,24 @@ export interface SessionPayload {
   idleExpiresAt: string;
 }
 
+export interface SessionProfile {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    joinedAt: string;
+  };
+  space: SessionSpace | null;
+  spaces: SessionSpace[];
+  session: {
+    signedInAt: string;
+    lastSeenAt: string;
+    expiresAt: string;
+    idleExpiresAt: string;
+  };
+}
+
 const defaultIdleMinutes = 8 * 60;
 const defaultMaxDays = 7;
 
@@ -118,6 +136,35 @@ export class AuthService {
     return this.payload(session.userId, session.spaceId, session.expiresAt, session.lastSeenAt);
   }
 
+  /** Detailed account information for the signed-in user's profile panel. */
+  async profile(sessionId: string): Promise<SessionProfile> {
+    const session = await this.prisma.session.findUnique({ where: { id: sessionId } });
+    if (!session || session.revokedAt) throw new UnauthorizedException('会话已失效。');
+    const user = await this.prisma.user.findUnique({ where: { id: session.userId } });
+    if (!user) throw new UnauthorizedException('会话用户不存在。');
+    const spaces = await this.memberships(user.id);
+    const space = spaces.find((item) => item.id === session.spaceId) ?? null;
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        joinedAt: user.createdAt.toISOString(),
+      },
+      space,
+      spaces,
+      session: {
+        signedInAt: session.createdAt.toISOString(),
+        lastSeenAt: session.lastSeenAt.toISOString(),
+        expiresAt: session.expiresAt.toISOString(),
+        idleExpiresAt: new Date(
+          Math.min(session.expiresAt.getTime(), session.lastSeenAt.getTime() + this.idleMs),
+        ).toISOString(),
+      },
+    };
+  }
+
   /** Validates a raw bearer token for cookie rotation on a public route. */
   async rotateByToken(token: string) {
     const session = await this.prisma.session.findUnique({
@@ -178,7 +225,7 @@ export class AuthService {
     return this.payload(session.userId, spaceId, session.expiresAt, session.lastSeenAt);
   }
 
-  async changePassword(userId: string, current: string, next: string) {
+  async changePassword(userId: string, sessionId: string, current: string, next: string) {
     if (next.length < 8 || next.length > 128) {
       throw new BadRequestException('新密码须为 8 至 128 个字符。');
     }
@@ -193,9 +240,9 @@ export class AuthService {
       where: { id: userId },
       data: { password: await hashPassword(next) },
     });
-    // Sign out every other session after a password change.
+    // Sign out every other session while keeping the browser that made the change.
     await this.prisma.session.updateMany({
-      where: { userId, revokedAt: null },
+      where: { userId, revokedAt: null, id: { not: sessionId } },
       data: { revokedAt: new Date() },
     });
     return { ok: true };
